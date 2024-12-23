@@ -1,6 +1,6 @@
 import pandas as pd
 
-from models import Question, AnswerEnum
+from src.models.models import Question, AnswerEnum
 
 def read_excel(
         problem_file_path,

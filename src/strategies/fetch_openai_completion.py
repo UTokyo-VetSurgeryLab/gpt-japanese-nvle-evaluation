@@ -1,5 +1,5 @@
-from models import Question
-from OpenAIClient import OpenAIClient
+from src.models.models import Question
+from src.services.OpenAIClient import OpenAIClient
 
 async def fetch_openai_completion(
     openai_client: OpenAIClient,

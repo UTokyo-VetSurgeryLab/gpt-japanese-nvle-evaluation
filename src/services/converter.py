@@ -3,17 +3,18 @@ import os
 import pandas as pd
 import pdfplumber
 
+"""
 from PyPDF2 import PdfReader
 
 # 使ってみたけどうまくいかない
 def extract_questions_to_excel(input_path, output_path):
-    """
+    """"""
     PDFファイルから問題番号、問題文、選択肢を抽出し、Excelファイルに出力する関数。
 
     Parameters:
         input_path (str): 入力PDFファイルのパス
         output_path (str): 出力Excelファイルのパス
-    """
+    """"""
     # PDFファイルからテキストを読み込む
     reader = PdfReader(input_path)
     text = ""
@@ -53,7 +54,7 @@ def extract_questions_to_excel(input_path, output_path):
 # input_path = "academic_a_questions.pdf"
 # output_path = "output.xlsx"
 # extract_questions_to_excel(input_path, output_path)
-
+"""
 
 
 def question_pdf_converter_to_excel(pdf_path, output_path):
