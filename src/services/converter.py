@@ -115,6 +115,118 @@ def question_pdf_converter_to_excel(pdf_path, output_path):
     print(f"エクセルファイルに変換完了: {output_path}")
 
 
+def clean_extracted_text(raw_text):
+    """
+    Clean and structure the raw text extracted from the PDF.
+    - Extracts questions and options while removing unnecessary sections.
+    """
+    # Split the text into lines for processing
+    lines = raw_text.splitlines()
+    
+    # Variables to store cleaned output
+    questions = []
+    current_question = ""
+    current_options = []
+    
+    # Regex patterns
+    question_pattern = re.compile(r"^問\s?\d+")
+    option_pattern = re.compile(r"^\d+．")  # Matches options like "1．"
+    
+    for line in lines:
+        line = line.strip()  # Remove leading/trailing whitespace
+        
+        # Check if the line starts a new question
+        if question_pattern.match(line):
+            # Save the previous question and its options if present
+            if current_question:
+                
+                questions.append({"question": current_question, "options": current_options})
+            
+            # Start a new question
+            current_question = line
+            current_options = []
+        
+        # Check if the line is an option
+        elif option_pattern.match(line):
+            current_options.append(line)
+        
+        # Otherwise, assume it's part of the current question or irrelevant
+        elif current_question:
+            current_question += " " + line
+    
+    # Add the last question if it exists
+    if current_question:
+        questions.append({"question": current_question, "options": current_options})
+    
+    return questions
+
+
+
+# 調整
+def question_pdf_converter_to_excel_test(pdf_path, output_path):
+    """
+    PDFから問題番号、問題文、選択肢を抽出し、エクセルファイルに保存する関数。
+    
+    Args:
+        pdf_path (str): PDFファイルのパス。
+        output_path (str): 出力エクセルファイルのパス。
+    """
+    data = []
+
+    # PDFを開く
+    with pdfplumber.open(pdf_path) as pdf:
+        for page_number, page in enumerate(pdf.pages):
+            text = page.extract_text()
+            if text:
+                lines = text.split("\n")
+                current_number = None
+                current_question = []
+                current_options = []
+
+                for line in lines:
+                    # 問題番号を検出
+                    match_number = re.match(r"^問\s*(\d+)", line)
+                    if match_number:
+                        # 前の問題を保存
+                        if current_number and current_question:
+                            data.append({
+                                "number": current_number,
+                                "question": " ".join(current_question).strip(),
+                                "options": "\n".join(current_options).strip()
+                            })
+                        # 新しい問題の初期化
+                        current_number = match_number.group(1)
+                        current_question = []
+                        current_options = []
+                        continue
+
+                    # 選択肢を検出
+                    match_option = re.match(r"^\s*\d+\．\s+(.+)", line.strip())
+                    if match_option:
+                        current_options.append(match_option.group(1))
+                        continue
+
+                    # 問題文の追加（選択肢でない行）
+                    if current_number:
+                        current_question.append(line.strip())
+
+                # 最後の問題を保存
+                if current_number and current_question:
+                    data.append({
+                        "number": current_number,
+                        "question": " ".join(current_question).strip(),
+                        "options": "\n".join(current_options).strip()
+                    })
+
+    # データをデータフレームに変換
+    df = pd.DataFrame(data, columns=["number", "question", "options"])
+
+    # エクセルに保存
+    df.to_excel(output_path, index=False, engine="openpyxl")
+    print(f"エクセルファイルに変換完了!: {output_path}")
+
+
+
 
 sections = {
     "必須問題": "essential_answers.xlsx",
