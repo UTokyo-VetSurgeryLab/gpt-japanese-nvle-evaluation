@@ -173,50 +173,38 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
     """
     data = []
 
-    # PDFを開く
+    # Re-process the PDF file
     with pdfplumber.open(pdf_path) as pdf:
-        for page_number, page in enumerate(pdf.pages):
+        for page in pdf.pages:
             text = page.extract_text()
             if text:
-                lines = text.split("\n")
-                current_number = None
-                current_question = []
-                current_options = []
+                lines = text.split('\n')
+                question_text, options = "", []
+                in_question = False
 
                 for line in lines:
-                    # 問題番号を検出
-                    match_number = re.match(r"^問\s*(\d+)", line)
-                    if match_number:
-                        # 前の問題を保存
-                        if current_number and current_question:
-                            data.append({
-                                "number": current_number,
-                                "question": " ".join(current_question).strip(),
-                                "options": "\n".join(current_options).strip()
-                            })
-                        # 新しい問題の初期化
-                        current_number = match_number.group(1)
-                        current_question = []
-                        current_options = []
-                        continue
-
-                    # 選択肢を検出
-                    match_option = re.match(r"^\s*\d+\．\s+(.+)", line.strip())
-                    if match_option:
-                        current_options.append(match_option.group(1))
-                        continue
-
-                    # 問題文の追加（選択肢でない行）
-                    if current_number:
-                        current_question.append(line.strip())
-
-                # 最後の問題を保存
-                if current_number and current_question:
-                    data.append({
-                        "number": current_number,
-                        "question": " ".join(current_question).strip(),
-                        "options": "\n".join(current_options).strip()
-                    })
+                    # Detect question start
+                    if line.startswith('問'):
+                        # If a question was already being processed, save it before starting a new one
+                        if question_text and options:
+                            data.append((len(data)+1, question_text, "\n".join(options)))
+                        
+                        # Start a new question
+                        question_text = line.strip()
+                        options = []
+                        in_question = True
+                    
+                    # Collect options
+                    elif in_question and line.strip() and line[0].isdigit():
+                        options.append(line.strip())
+                    
+                    # End of question block if no more options and empty lines
+                    elif in_question and not line.strip() and options:
+                        in_question = False
+                        
+                # Append last question on the page if any
+                if question_text and options:
+                    data.append((len(data)+1, question_text, "\n".join(options)))
 
     # データをデータフレームに変換
     df = pd.DataFrame(data, columns=["number", "question", "options"])
