@@ -162,7 +162,7 @@ def clean_extracted_text(raw_text):
 
 
 
-# 調整
+# これを使う
 def question_pdf_converter_to_excel_test(pdf_path, output_path):
     """
     PDFから問題番号、問題文、選択肢を抽出し、エクセルファイルに保存する関数。
@@ -172,6 +172,8 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
         output_path (str): 出力エクセルファイルのパス。
     """
     data = []
+    
+    alp_options = {'a', 'b', 'c', 'd', 'e'}
 
     # Re-process the PDF file
     with pdfplumber.open(pdf_path) as pdf:
@@ -179,32 +181,49 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
             text = page.extract_text()
             if text:
                 lines = text.split('\n')
-                question_text, options = "", []
-                in_question = False
+                question_texts, options = [], []
+                #in_question = False
 
                 for line in lines:
                     # Detect question start
                     if line.startswith('問'):
                         # If a question was already being processed, save it before starting a new one
-                        if question_text and options:
-                            data.append((len(data)+1, question_text, "\n".join(options)))
+                        if question_texts and options:
+                            data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
                         
                         # Start a new question
-                        question_text = line.strip()
+                        question_head_text = line.strip().lstrip('問').lstrip()
+                        r = re.match(r"^\d+", question_head_text)
+                        question_modified_head_text = question_head_text[len(r.group(0)):]
+                        question_texts = [question_modified_head_text.strip()]
                         options = []
-                        in_question = True
+                        #in_question = True
                     
                     # Collect options
-                    elif in_question and line.strip() and line[0].isdigit():
-                        options.append(line.strip())
+                    #elif in_question and line.strip() and line[0].isdigit():
+                    elif line.strip() and line[0].isdigit():
+                        l_striped = line.strip()
+                        if len(l_striped) > 4:
+                            options.append(l_striped)
+                        else:
+                            for ch in l_striped:
+                                if not ch.isdigit():
+                                    options.append(l_striped)
+                                    break
+                                
+                    
+                    elif line.strip() and line[0] in alp_options:
+                        question_texts.append(line)
+                    else:
+                        print(line)
                     
                     # End of question block if no more options and empty lines
-                    elif in_question and not line.strip() and options:
-                        in_question = False
+                    #elif in_question and not line.strip() and options:
+                    #    in_question = False
                         
                 # Append last question on the page if any
-                if question_text and options:
-                    data.append((len(data)+1, question_text, "\n".join(options)))
+                if question_texts and options:
+                    data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
 
     # データをデータフレームに変換
     df = pd.DataFrame(data, columns=["number", "question", "options"])
