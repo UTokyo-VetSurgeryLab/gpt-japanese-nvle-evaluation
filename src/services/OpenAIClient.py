@@ -1,6 +1,5 @@
 import openai
 from settings import Settings
-from src.models.models import AnswerEnum
 
 class OpenAIParams:
     model = "gpt-4o"
@@ -25,26 +24,14 @@ class OpenAIClient:
             {"role": "user", "content": user_prompt },
         ]
 
-    def _make_user_prompt(self, question_sentence, answer_options):
-        user_prompt = f"""
-        {question_sentence} 
-        The answer options are {answer_options}
-        Respond with only the number of your choice (e.g., 1, 2, 3, etc.)
-        """
-        return user_prompt
 
-    async def fetch_completion(self, system_prompt, question_sentence, answer_options):
-        user_prompt = self._make_user_prompt(
-            question_sentence=question_sentence,
-            answer_options=answer_options
-        )
+    async def fetch_completion(self, system_prompt, user_prompt):
         try:
             response = await self._completion(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt
             )
-            response_enum = AnswerEnum(int(response))
-            return response_enum
+            return response
         except Exception as e:
             print(e)
             return None
