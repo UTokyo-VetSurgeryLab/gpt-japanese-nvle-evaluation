@@ -1,6 +1,6 @@
 import pandas as pd
 
-from models import Question, AnswerEnum
+from src.models.models import Question, AnswerEnum
 
 def read_excel(
         problem_file_path,
@@ -14,7 +14,7 @@ def read_excel(
     for record in data_dict:
         question_number = record['number']
         question_sentence = record['question']
-        answer_options = record['answer_options']
+        answer_options = record['options']
         question = Question(
             question_number=question_number,
             question_sentence=question_sentence,

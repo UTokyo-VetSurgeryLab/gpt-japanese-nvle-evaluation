@@ -1,6 +1,6 @@
 import openai
 from settings import Settings
-from models import AnswerEnum
+from src.models.models import AnswerEnum
 
 class OpenAIParams:
     model = "gpt-4o"

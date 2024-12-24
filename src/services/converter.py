@@ -3,60 +3,8 @@ import os
 import pandas as pd
 import pdfplumber
 
-from PyPDF2 import PdfReader
-
-# 使ってみたけどうまくいかない
-def extract_questions_to_excel(input_path, output_path):
-    """
-    PDFファイルから問題番号、問題文、選択肢を抽出し、Excelファイルに出力する関数。
-
-    Parameters:
-        input_path (str): 入力PDFファイルのパス
-        output_path (str): 出力Excelファイルのパス
-    """
-    # PDFファイルからテキストを読み込む
-    reader = PdfReader(input_path)
-    text = ""
-    for page in reader.pages:
-        text += page.extract_text()
-    
-    # 正規表現で問題番号、問題文、選択肢を抽出する
-    question_pattern = re.compile(
-        r"問\s*(\d+)\s*(.+?)\n(?:１．(.+?)\s*２．(.+?)\s*３．(.+?)\s*４．(.+?)\s*５．(.+?))\n",
-        re.DOTALL
-    )
-    
-    # データを格納するリスト
-    data = []
-    for match in question_pattern.finditer(text):
-        question_number = match.group(1)
-        question_text = match.group(2).strip()
-        options = [match.group(i).strip() for i in range(3, 8)]
-        data.append({
-            "問題番号": question_number,
-            "問題文": question_text,
-            "選択肢1": options[0],
-            "選択肢2": options[1],
-            "選択肢3": options[2],
-            "選択肢4": options[3],
-            "選択肢5": options[4]
-        })
-    
-    # データをDataFrameに変換
-    df = pd.DataFrame(data)
-    
-    # Excelファイルに出力
-    df.to_excel(output_path, index=False, engine="openpyxl")
-    print(f"データが正常に {output_path} に出力されました。")
-
-# 使用例
-# input_path = "academic_a_questions.pdf"
-# output_path = "output.xlsx"
-# extract_questions_to_excel(input_path, output_path)
-
-
-
-def question_pdf_converter_to_excel(pdf_path, output_path):
+# これを使う
+def question_pdf_converter_to_excel_test(pdf_path, output_path):
     """
     PDFから問題番号、問題文、選択肢を抽出し、エクセルファイルに保存する関数。
     
@@ -65,53 +13,66 @@ def question_pdf_converter_to_excel(pdf_path, output_path):
         output_path (str): 出力エクセルファイルのパス。
     """
     data = []
+    
+    alp_options = {'a', 'b', 'c', 'd', 'e'}
 
-    # PDFを開く
+    # Re-process the PDF file
     with pdfplumber.open(pdf_path) as pdf:
-        for page_number, page in enumerate(pdf.pages):
+        for page in pdf.pages:
             text = page.extract_text()
             if text:
-                print(f"デバッグ: ページ {page_number + 1} の解析開始")
-                lines = text.split("\n")
-                current_number = None
-                current_question = None
-                current_options = []
+                lines = text.split('\n')
+                question_texts, options = [], []
+                #in_question = False
 
                 for line in lines:
-                    # 問題番号を検出
-                    match = re.match(r"^問\s*(\d+)", line)
-                    if match:
-                        # 前の問題を保存
-                        if current_number and current_question:
-                            data.append({
-                                "number": current_number,
-                                "question": current_question,
-                                "options": "\n".join(current_options)
-                            })
-                        # 現在の問題を更新
-                        current_number = match.group(1)
-                        current_question = line.split(" ", 1)[-1].strip()  # 問題文の開始部分
-                        current_options = []  # 選択肢をリセット
-                        print(f"デバッグ: 問題番号 {current_number} 検出")
-                    # 選択肢を検出
-                    elif re.match(r"^\s*\d+\.\s", line.strip()):
-                        current_options.append(line.strip())
-                        print(f"デバッグ: 選択肢検出 - {line.strip()}")
-
-                # 最後の問題を保存
-                if current_number and current_question:
-                    data.append({
-                        "number": current_number,
-                        "question": current_question,
-                        "options": "\n".join(current_options)
-                    })
+                    # Detect question start
+                    if line.startswith('問'):
+                        # If a question was already being processed, save it before starting a new one
+                        if question_texts and options:
+                            data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
+                        
+                        # Start a new question
+                        question_head_text = line.strip().lstrip('問').lstrip()
+                        r = re.match(r"^\d+", question_head_text)
+                        question_modified_head_text = question_head_text[len(r.group(0)):]
+                        question_texts = [question_modified_head_text.strip()]
+                        options = []
+                        #in_question = True
+                    
+                    # Collect options
+                    #elif in_question and line.strip() and line[0].isdigit():
+                    elif line.strip() and line[0].isdigit():
+                        l_striped = line.strip()
+                        if len(l_striped) > 4:
+                            options.append(l_striped)
+                        else:
+                            for ch in l_striped:
+                                if not ch.isdigit():
+                                    options.append(l_striped)
+                                    break
+                                
+                    
+                    elif line.strip() and line[0] in alp_options:
+                        question_texts.append(line)
+                    else:
+                        print(line)
+                    
+                    # End of question block if no more options and empty lines
+                    #elif in_question and not line.strip() and options:
+                    #    in_question = False
+                        
+                # Append last question on the page if any
+                if question_texts and options:
+                    data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
 
     # データをデータフレームに変換
     df = pd.DataFrame(data, columns=["number", "question", "options"])
 
     # エクセルに保存
     df.to_excel(output_path, index=False, engine="openpyxl")
-    print(f"エクセルファイルに変換完了: {output_path}")
+    print(f"エクセルファイルに変換完了!: {output_path}")
+
 
 
 
