@@ -1,5 +1,6 @@
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
+from .translate_to_English_by_openai import translate_to_English_by_openai
 
 def make_user_prompt(question_sentence, answer_options):
         user_prompt = f"""
@@ -11,8 +12,9 @@ def make_user_prompt(question_sentence, answer_options):
 
 async def solve_questions_by_openai(
     openai_client: OpenAIClient,
-    questions: list[Question],
-    batch_size=10,
+    questions: list[Question], 
+    batch_size: int=10,
+    is_translated_to_English: bool=False,
 ):
     system_prompt = """
     You have to solve the problem of veterinary medicine.
@@ -21,8 +23,20 @@ async def solve_questions_by_openai(
     for i in range(0, question_size, batch_size):
         question_list = questions[i:i+batch_size]
         for question in question_list:
-            question_sentence = question.get_question_sentence()
-            answer_options = question.get_answer_options()
+            if is_translated_to_English:
+                response = await translate_to_English_by_openai(
+                    openai_client=openai_client,
+                    question=question,
+                )
+                question_sentence_in_English = response['question_sentence_in_English']
+                answer_options_in_English = response['answer_options_in_English']
+                question_sentence = question_sentence_in_English
+                answer_options = answer_options_in_English
+                question.question_sentence_in_English = question_sentence_in_English
+                question.answer_options_in_English = answer_options_in_English
+            else:
+                question_sentence = question.get_question_sentence()
+                answer_options = question.get_answer_options()
             user_prompt = make_user_prompt(
                 question_sentence=question_sentence,
                 answer_options=answer_options,
