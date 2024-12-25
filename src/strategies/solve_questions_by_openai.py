@@ -1,5 +1,6 @@
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
+from src.services.write_to_excel import write_to_excel
 from .translate_to_English_by_openai import translate_to_English_by_openai
 
 def make_user_prompt(question_sentence, answer_options):
@@ -15,6 +16,8 @@ async def solve_questions_by_openai(
     questions: list[Question], 
     batch_size: int=10,
     is_translated_to_English: bool=False,
+    excel_output_path: str = '',
+    does_also_write_openai_answer: bool = False,
 ):
     system_prompt = """
     You have to solve the problem of veterinary medicine.
@@ -52,4 +55,20 @@ async def solve_questions_by_openai(
                 question.set_openai_answer(answer)
             except Exception as e:
                 print(e)
+    if excel_output_path:
+        if does_also_write_openai_answer:
+            openai_answer_list = [question.openai_answer for question in questions]
+            write_to_excel(
+                header='openai_answer',
+                values=openai_answer_list,
+                excel_path=excel_output_path,
+            )
+        openai_iscorrect_list = [
+            "O" if question.is_correct() else "X" for question in questions
+        ]
+        write_to_excel(
+            header="is_correct",
+            values=openai_iscorrect_list,
+            excel_path=excel_output_path,
+        )
     return questions
