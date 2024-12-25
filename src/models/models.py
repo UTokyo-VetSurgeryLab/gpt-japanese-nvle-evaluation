@@ -9,6 +9,8 @@ class Question:
         self.supplimentary_information = None
         self.correct_answer = set()
         self.openai_answer = None
+        self.question_sentence_in_English = None
+        self.answer_options_in_English = None
 
     def is_correct(self):
         if self.openai_answer is None:
