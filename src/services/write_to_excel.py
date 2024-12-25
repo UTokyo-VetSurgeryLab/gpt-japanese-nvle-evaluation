@@ -13,7 +13,7 @@ def write_to_excel(
     next_column = sheet.max_column + 1  # 現在の最大列の次の列を取得
 
     # 行に沿って書き込み
-    sheet.cell(row=0, column=next_column, value=header)
+    sheet.cell(row=1, column=next_column, value=header)
     for row_index, value in enumerate(values, start=2):  # 行番号は2から始まる
         sheet.cell(row=row_index, column=next_column, value=value)
 
