@@ -5,11 +5,11 @@ from src.services.OpenAIClient import OpenAIClient
 async def translate_to_English_by_openai(
     openai_client: OpenAIClient,
     question: Question,
-    batch_size=10,
 ):
     system_prompt = """
     You have to translate sentence below to English which
     must be quite plain and easy to understand.
+    If the terminology is too difficult, you must add explanation for that words.
     """
     
     question_sentence = question.get_question_sentence()

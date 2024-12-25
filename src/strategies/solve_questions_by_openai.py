@@ -18,6 +18,8 @@ async def solve_questions_by_openai(
 ):
     system_prompt = """
     You have to solve the problem of veterinary medicine.
+    Notably, the examination is of Japan.
+    Therefore, you should refer to the low, guidelines, and criteria of Japan. 
     """
     question_size = len(questions)
     for i in range(0, question_size, batch_size):
@@ -46,7 +48,7 @@ async def solve_questions_by_openai(
                     system_prompt=system_prompt,
                     user_prompt=user_prompt,
                 )
-                answer = AnswerEnum(int(response))
+                answer = AnswerEnum(int(response.strip()[0]))
                 question.set_openai_answer(answer)
             except Exception as e:
                 print(e)
