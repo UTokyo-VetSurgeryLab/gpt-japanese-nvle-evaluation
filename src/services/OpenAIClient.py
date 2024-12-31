@@ -7,12 +7,12 @@ class OpenAIParams:
 
 class OpenAIClient:
     def __init__(self, api_key=OpenAIParams.api_key, model=OpenAIParams.model):
-        self.client = openai.OpenAI(api_key=api_key)
+        self.client = openai.AsyncOpenAI(api_key=api_key)
         self.model=model
 
     async def _completion(self, system_prompt, user_prompt):
         messages = self._make_massage(system_prompt=system_prompt, user_prompt=user_prompt)
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model=self.model,
             messages=messages,
             )
