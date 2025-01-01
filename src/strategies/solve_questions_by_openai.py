@@ -1,11 +1,38 @@
+from abc import ABC
 import asyncio
 
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
 from src.services.write_to_excel import write_to_excel
-from .translate_to_English_by_openai import translate_to_English_by_openai
+from .translate_to_English_by_openai import (
+    translate_to_English_by_openai,
+    TranslateToEnglishPrompt,
+    BasicTranslateToEnglishPrompt,
+)
 
-def make_user_prompt(question_sentence, answer_options):
+class SolveQuestionPrompt(ABC):
+    prompt_name = ""
+    system_prompt = ""
+
+class BasicSolveQuestionPrompt(SolveQuestionPrompt):
+    prompt_name = "basic_solve_question_prompt"
+    system_prompt = """
+    You have to solve the problem of veterinary medicine.
+    Notably, the examination is of Japan.
+    Therefore, you should refer to the low, guidelines, and criteria of Japan. 
+    """
+
+class OptimizedSolveQuestionPrompt1(SolveQuestionPrompt):
+    prompt_name = "optimized_solve_question_prompt_1"
+    system_prompt = """
+    As a vet, provide a diagnosis, treatment, and prevention for any illness or desease
+    based on a through examination of the patient's age, symptoms, and clinical course.
+    Use your expertise to answer clinical veterinary medicine or public health questions
+    related to Japan, and output your choice. It is quite important to refer to Japanese
+    lows, guidelines, and criteion. Additionally, "in our country" means "in Japan".
+    """
+
+def make_question_user_prompt(question_sentence, answer_options):
         user_prompt = f"""
         {question_sentence} 
         The answer options are {answer_options}
@@ -20,12 +47,10 @@ async def solve_questions_by_openai(
     is_translated_to_English: bool = False,
     excel_output_path: str = '',
     does_also_write_openai_answer: bool = False,
+    solve_question_prompt: SolveQuestionPrompt = BasicSolveQuestionPrompt,
+    translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt
 ):
-    system_prompt = """
-    You have to solve the problem of veterinary medicine.
-    Notably, the examination is of Japan.
-    Therefore, you should refer to the low, guidelines, and criteria of Japan. 
-    """
+    system_prompt = solve_question_prompt.system_prompt
     
     async def process_question(question: Question):
         try:
@@ -33,6 +58,7 @@ async def solve_questions_by_openai(
                 response = await translate_to_English_by_openai(
                     openai_client=openai_client,
                     question=question,
+                    translate_to_english_prompt=translate_to_english_prompt
                 )
                 question_sentence = response['question_sentence_in_English']
                 answer_options = response['answer_options_in_English']
@@ -42,7 +68,7 @@ async def solve_questions_by_openai(
                 question_sentence = question.get_question_sentence()
                 answer_options = question.get_answer_options()
 
-            user_prompt = make_user_prompt(
+            user_prompt = make_question_user_prompt(
                 question_sentence=question_sentence,
                 answer_options=answer_options,
             )
