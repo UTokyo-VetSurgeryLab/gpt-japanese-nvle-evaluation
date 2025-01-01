@@ -1,6 +1,10 @@
+from math import isnan
 import pandas as pd
 
 from src.models.models import Question, AnswerEnum
+
+def is_nan(x):
+    return type(x) is float and isnan(x)
 
 def read_excel(
         problem_file_path,
@@ -15,6 +19,8 @@ def read_excel(
         question_number = record['number']
         question_sentence = record['question']
         answer_options = record['options']
+        if is_nan(question_number) or is_nan(question_sentence) or is_nan(answer_options):
+            continue
         question = Question(
             question_number=question_number,
             question_sentence=question_sentence,
