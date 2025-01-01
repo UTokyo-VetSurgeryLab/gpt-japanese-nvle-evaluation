@@ -1,8 +1,10 @@
 from abc import ABC
 import asyncio
+import datetime
 
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
+from src.services.accuracy import calculate_accuracy
 from src.services.write_to_excel import write_to_excel
 from .translate_to_English_by_openai import (
     translate_to_English_by_openai,
@@ -15,7 +17,7 @@ class SolveQuestionPrompt(ABC):
     system_prompt = ""
 
 class BasicSolveQuestionPrompt(SolveQuestionPrompt):
-    prompt_name = "basic_solve_question_prompt"
+    prompt_name = "basic"
     system_prompt = """
     You have to solve the problem of veterinary medicine.
     Notably, the examination is of Japan.
@@ -23,7 +25,7 @@ class BasicSolveQuestionPrompt(SolveQuestionPrompt):
     """
 
 class OptimizedSolveQuestionPrompt1(SolveQuestionPrompt):
-    prompt_name = "optimized_solve_question_prompt_1"
+    prompt_name = "optimized_1"
     system_prompt = """
     As a vet, provide a diagnosis, treatment, and prevention for any illness or desease
     based on a through examination of the patient's age, symptoms, and clinical course.
@@ -89,18 +91,32 @@ async def solve_questions_by_openai(
         await asyncio.gather(*tasks)
 
     if excel_output_path:
+        header_list = []
+        dt_now = datetime.datetime.now()
+        now = dt_now.strftime('%Y/%m/%d %H:%M')
+        header_list.append(now)
+        model = f"model:{openai_client.model}"
+        header_list.append(model)
+        header_list.append(f"\nsolve_prompt:{solve_question_prompt.prompt_name}")
+        if is_translated_to_English:
+            header_list.append(f"\ntranslation:{translate_to_english_prompt.prompt_name}")
+        header = '\n'.join(header_list)
         if does_also_write_openai_answer:
             openai_answer_list = [question.openai_answer for question in questions]
             write_to_excel(
-                header='openai_answer',
+                header=header,
                 values=openai_answer_list,
                 excel_path=excel_output_path,
             )
         openai_iscorrect_list = [
             "O" if question.is_correct() else "X" for question in questions
         ]
+        # 正答率をエクセルの最下段に書き込む
+        accuracy = calculate_accuracy(questions=questions)
+        openai_iscorrect_list.append(round(accuracy, 2))
+
         write_to_excel(
-            header="is_correct",
+            header=header,
             values=openai_iscorrect_list,
             excel_path=excel_output_path,
         )

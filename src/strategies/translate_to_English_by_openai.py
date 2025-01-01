@@ -8,7 +8,7 @@ class TranslateToEnglishPrompt(ABC):
     system_prompt = ""
 
 class BasicTranslateToEnglishPrompt(TranslateToEnglishPrompt):
-    prompt_name = "basic_translate_to_english_prompt"
+    prompt_name = "basic_"
     system_prompt = """
     You have to translate sentence below to English which
     must be quite plain and easy to understand.
@@ -16,7 +16,7 @@ class BasicTranslateToEnglishPrompt(TranslateToEnglishPrompt):
     """
 
 class OptimizedTranslateToEnglishPrompt1(TranslateToEnglishPrompt):
-    prompt_name = "optimized_translate_to_english_prompt_1"
+    prompt_name = "optimized_1"
     system_prompt = """
     you need an English translator, spell checker, and veterinary medical language
     expert who can translate Japanese text into English.The translation must to be
