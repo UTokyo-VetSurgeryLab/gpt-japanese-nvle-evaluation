@@ -17,7 +17,7 @@ class SolveQuestionPrompt(ABC):
     system_prompt = ""
 
 class BasicSolveQuestionPrompt(SolveQuestionPrompt):
-    prompt_name = "basic_solve_question_prompt"
+    prompt_name = "basic"
     system_prompt = """
     You have to solve the problem of veterinary medicine.
     Notably, the examination is of Japan.
@@ -25,7 +25,7 @@ class BasicSolveQuestionPrompt(SolveQuestionPrompt):
     """
 
 class OptimizedSolveQuestionPrompt1(SolveQuestionPrompt):
-    prompt_name = "optimized_solve_question_prompt_1"
+    prompt_name = "optimized_1"
     system_prompt = """
     As a vet, provide a diagnosis, treatment, and prevention for any illness or desease
     based on a through examination of the patient's age, symptoms, and clinical course.
