@@ -36,21 +36,33 @@ class OpenAIClient:
         model=Gpt4oMini,
     ):
         self.client = openai.AsyncOpenAI(api_key=api_key)
-        self.model=model.model
+        self.model=model
 
     async def _completion(self, system_prompt, user_prompt):
-        messages = self._make_massage(system_prompt=system_prompt, user_prompt=user_prompt)
+        messages = self._make_message(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+        ) if self.model.is_system_prompt_necessary else self._make_message_without_system_prompt(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt
+        )
         response = await self.client.chat.completions.create(
-            model=self.model,
+            model=self.model.model,
             messages=messages,
             )
         return response.choices[0].message.content
 
-    def _make_massage(self, system_prompt, user_prompt):
+    def _make_message(self, system_prompt, user_prompt):
         return [
             {"role": "system", "content": system_prompt },
             {"role": "user", "content": user_prompt },
         ]
+
+    def _make_message_without_system_prompt(self, system_prompt, user_prompt):
+        return [{
+            "role": "user",
+            "content": "\n".join([system_prompt, user_prompt])
+        }]
 
 
     async def fetch_completion(self, system_prompt, user_prompt):
