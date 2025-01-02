@@ -75,5 +75,5 @@ class OpenAIClient:
                 return response
             except Exception as e:
                 print(e)
-                asyncio.sleep(self.SLEEP_TIME_SEC)
+                await asyncio.sleep(self.SLEEP_TIME_SEC)
         return None
