@@ -1,10 +1,30 @@
+from abc import ABC
 import asyncio
 import openai
 
 from settings import Settings
 
-class OpenAIParams:
+class OpenAIModel(ABC):
+    model = ""
+    is_system_prompt_necessary = True
+
+class Gpt4o(OpenAIModel):
     model = "gpt-4o"
+    is_system_prompt_necessary = True
+
+class Gpt4oMini(OpenAIModel):
+    model = "gpt-4o-mini"
+    is_system_prompt_necessary = True
+
+class Gpto1Preview(OpenAIModel):
+    model = "o1-preview"
+    is_system_prompt_necessary = False
+
+class Gpto1Mini(OpenAIModel):
+    model = "o1-mini"
+    is_system_prompt_necessary = False
+
+class OpenAIParams:
     api_key = Settings.API_KEY
 
 class OpenAIClient:
@@ -13,10 +33,10 @@ class OpenAIClient:
     def __init__(
         self,
         api_key=OpenAIParams.api_key,
-        model=OpenAIParams.model,
+        model=Gpt4oMini,
     ):
         self.client = openai.AsyncOpenAI(api_key=api_key)
-        self.model=model
+        self.model=model.model
 
     async def _completion(self, system_prompt, user_prompt):
         messages = self._make_massage(system_prompt=system_prompt, user_prompt=user_prompt)
