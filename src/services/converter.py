@@ -18,12 +18,13 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
 
     # Re-process the PDF file
     with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
+        for page in pdf.pages[1:]:
             text = page.extract_text()
             if text:
                 lines = text.split('\n')
                 question_texts, options = [], []
                 #in_question = False
+                is_option = False
 
                 for line in lines:
                     # Detect question start
@@ -39,6 +40,7 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
                         question_texts = [question_modified_head_text.strip()]
                         options = []
                         #in_question = True
+                        is_option = False
                     
                     # Collect options
                     #elif in_question and line.strip() and line[0].isdigit():
@@ -46,6 +48,7 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
                         l_striped = line.strip()
                         if len(l_striped) > 4:
                             options.append(l_striped)
+                            is_option = True
                         else:
                             for ch in l_striped:
                                 if not ch.isdigit():
@@ -57,6 +60,18 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
                         question_texts.append(line)
                     else:
                         print(line)
+                        if line[0] == "〰":
+                            continue
+                        if line[:2] == "別冊":
+                            continue
+                        if line[0] == '図':
+                            continue
+                        if line[0] == '表':
+                            continue
+                        if is_option:
+                            options.append(line)
+                        else:
+                            question_texts.append(line)
                     
                     # End of question block if no more options and empty lines
                     #elif in_question and not line.strip() and options:
