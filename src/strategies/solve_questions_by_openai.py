@@ -5,7 +5,7 @@ import datetime
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
 from src.services.accuracy import calculate_accuracy
-from src.services.write_to_excel import write_to_excel
+from src.services.write_to_excel import write_api_answers_to_excel
 from .translate_to_English_by_openai import (
     translate_to_English_by_openai,
     TranslateToEnglishPrompt,
@@ -103,7 +103,7 @@ async def solve_questions_by_openai(
         header = '\n'.join(header_list)
         if does_also_write_openai_answer:
             openai_answer_list = [question.openai_answer for question in questions]
-            write_to_excel(
+            write_api_answers_to_excel(
                 header=header,
                 values=openai_answer_list,
                 excel_path=excel_output_path,
@@ -115,7 +115,7 @@ async def solve_questions_by_openai(
         accuracy = calculate_accuracy(questions=questions)
         openai_iscorrect_list.append(round(accuracy, 2))
 
-        write_to_excel(
+        write_api_answers_to_excel(
             header=header,
             values=openai_iscorrect_list,
             excel_path=excel_output_path,
