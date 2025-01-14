@@ -3,6 +3,7 @@ import asyncio
 import openai
 
 from settings import Settings
+from src.services.recorder import ApiHistoryRecorder
 
 class OpenAIModel(ABC):
     model = ""
@@ -34,9 +35,11 @@ class OpenAIClient:
         self,
         api_key=OpenAIParams.api_key,
         model=Gpt4oMini,
+        api_history_recorder:ApiHistoryRecorder=None,
     ):
         self.client = openai.AsyncOpenAI(api_key=api_key)
-        self.model=model
+        self.model = model
+        self.api_history_recorder = api_history_recorder
 
     async def _completion(self, system_prompt, user_prompt):
         messages = self._make_message(
@@ -49,6 +52,13 @@ class OpenAIClient:
         response = await self.client.chat.completions.create(
             model=self.model.model,
             messages=messages,
+            )
+        if self.api_history_recorder:
+        # 一旦costは0でやる　ToDo:コスト計算機能実装
+            cost = 0
+            self.api_history_recorder.record(
+                model_str=self.model.model,
+                cost=cost
             )
         return response.choices[0].message.content
 

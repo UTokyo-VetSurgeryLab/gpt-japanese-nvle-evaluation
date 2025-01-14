@@ -164,3 +164,7 @@ cython_debug/
 
 settings.py
 problems/
+
+record/
+
+.DS_Store
