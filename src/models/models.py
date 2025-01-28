@@ -2,10 +2,11 @@ from enum import Enum
 
 
 class Question:
-    def __init__(self, question_number, question_sentence, answer_options):
-        self.question_number = question_number
+    def __init__(self, question_number, question_sentence, answer_options, image_path=None):
+        self.question_number = int(question_number)
         self.question_sentence = question_sentence
         self.answer_options = answer_options
+        self.image_path = image_path
         self.supplimentary_information = None
         self.correct_answer = set()
         self.openai_answer = None
