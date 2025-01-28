@@ -41,13 +41,15 @@ class OpenAIClient:
         self.model = model
         self.api_history_recorder = api_history_recorder
 
-    async def _completion(self, system_prompt, user_prompt):
+    async def _completion(self, system_prompt, user_prompt, base64_image=None):
         messages = self._make_message(
             system_prompt=system_prompt,
             user_prompt=user_prompt,
+            base64_image=base64_image,
         ) if self.model.is_system_prompt_necessary else self._make_message_without_system_prompt(
             system_prompt=system_prompt,
-            user_prompt=user_prompt
+            user_prompt=user_prompt,
+            base64_image=base64_image,
         )
         response = await self.client.chat.completions.create(
             model=self.model.model,
@@ -62,25 +64,47 @@ class OpenAIClient:
             )
         return response.choices[0].message.content
 
-    def _make_message(self, system_prompt, user_prompt):
+    def _make_message(self, system_prompt, user_prompt, base64_image=None):
+        if base64_image is not None:
+            return [
+                {"role": "system", "content": system_prompt },
+                {"role": "user", "content": [
+                    {"type": "text", "text": user_prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    },
+                ]},
+            ]
         return [
             {"role": "system", "content": system_prompt },
             {"role": "user", "content": user_prompt },
         ]
 
-    def _make_message_without_system_prompt(self, system_prompt, user_prompt):
+    def _make_message_without_system_prompt(self, system_prompt, user_prompt, base64_image=None):
+        if base64_image is not None:
+            return [
+                {"role": "user", "content": [
+                    {"type": "text", "text": "\n".join([system_prompt, user_prompt])},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                    },
+                ]},
+            ]
         return [{
             "role": "user",
             "content": "\n".join([system_prompt, user_prompt])
         }]
 
 
-    async def fetch_completion(self, system_prompt, user_prompt):
+    async def fetch_completion(self, system_prompt, user_prompt, base64_image=None):
         for _ in range(self.MAX_FETCH_NUM):
             try:
                 response = await self._completion(
                     system_prompt=system_prompt,
-                    user_prompt=user_prompt
+                    user_prompt=user_prompt,
+                    base64_image=base64_image
                 )
                 return response
             except Exception as e:
