@@ -6,6 +6,7 @@ from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
 from src.services.accuracy import calculate_accuracy
 from src.services.write_to_excel import write_to_excel
+from src.services.image_encoder import image_encoder_in_base64
 from .translate_to_English_by_openai import (
     translate_to_English_by_openai,
     TranslateToEnglishPrompt,
@@ -50,7 +51,8 @@ async def solve_questions_by_openai(
     excel_output_path: str = '',
     does_also_write_openai_answer: bool = False,
     solve_question_prompt: SolveQuestionPrompt = BasicSolveQuestionPrompt,
-    translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt
+    translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
+    is_image_contained: bool = False,
 ):
     system_prompt = solve_question_prompt.system_prompt
     
@@ -74,9 +76,21 @@ async def solve_questions_by_openai(
                 question_sentence=question_sentence,
                 answer_options=answer_options,
             )
+            
+            base64_image = None
+            if is_image_contained:
+                image_path = question.image_path
+                if image_path is None:
+                    print('Error: cannot find image path')
+                try:
+                    base64_image = image_encoder_in_base64(image_path=image_path)
+                except Exception as e:
+                    print(f'Error: {e}')
+
             response = await openai_client.fetch_completion(
                 system_prompt=system_prompt,
                 user_prompt=user_prompt,
+                base64_image=base64_image
             )
             answer = AnswerEnum(int(response.strip()[0]))
             question.set_openai_answer(answer)
@@ -100,7 +114,10 @@ async def solve_questions_by_openai(
         header_list.append(f"\nsolve_prompt:{solve_question_prompt.prompt_name}")
         if is_translated_to_English:
             header_list.append(f"\ntranslation:{translate_to_english_prompt.prompt_name}")
+        with_image = 'O' if is_image_contained else 'X'
+        header_list.append(f"\nwith_images:{with_image}")
         header = '\n'.join(header_list)
+
         if does_also_write_openai_answer:
             openai_answer_list = [question.openai_answer for question in questions]
             write_to_excel(
