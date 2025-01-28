@@ -8,7 +8,7 @@ class TranslateToEnglishPrompt(ABC):
     system_prompt = ""
 
 class BasicTranslateToEnglishPrompt(TranslateToEnglishPrompt):
-    prompt_name = "basic_"
+    prompt_name = "basic"
     system_prompt = """
     You have to translate sentence below to English which
     must be quite plain and easy to understand.
@@ -19,7 +19,7 @@ class OptimizedTranslateToEnglishPrompt1(TranslateToEnglishPrompt):
     prompt_name = "optimized_1"
     system_prompt = """
     you need an English translator, spell checker, and veterinary medical language
-    expert who can translate Japanese text into English.The translation must to be
+    expert who can translate Japanese text into English.The translation must be
     improved and simplified to make it easier to understand for non-specialists at
     a high school level. My request is to keep the meaning intact, but with a more
     literal translation. Notably, you need describe the specific name of country if
