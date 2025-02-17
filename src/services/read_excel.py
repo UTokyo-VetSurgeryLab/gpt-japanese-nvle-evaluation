@@ -8,8 +8,10 @@ def is_nan(x):
     return type(x) is float and isnan(x)
 
 def read_excel(
-        file_path
+        file_path,
     ):
+    
+    is_type_d = file_path[-1] == 'd'
     
     problem_file_path = f'{file_path}/questions.xlsx'
     answer_file_path = f'{file_path}/answers.xlsx'
@@ -32,7 +34,8 @@ def read_excel(
         question_number = int(question_number_float)
         
         if is_image_contained:
-            image_path = f'{images_file_path}/q{question_number}.heic'
+            image_num = question_number * 2 - 1 if is_type_d else question_number
+            image_path = f'{images_file_path}/q{image_num}.heic'
             question = Question(
                 question_number=question_number,
                 question_sentence=question_sentence,
@@ -65,6 +68,23 @@ def read_excel(
             print('ERROR: CANNOT READ EXCEL FILE WELL')
             return None
         question.read_correct_answer(correct_answer)
+    
+    if is_type_d:
+        type_d_common_sentence_file_path = f'{file_path}/questions_common_sentence.xlsx'
+        
+        df = pd.read_excel(type_d_common_sentence_file_path, engine="openpyxl")
+        data_dict = df.to_dict(orient="records")
+
+        for record in data_dict:
+            question_number_float = record['number']
+            common_question_sentence = record['question']
+            if is_nan(question_number_float) or is_nan(common_question_sentence):
+                continue
+            
+            question_number = int(question_number_float)
+            
+            for i in range(question_number*2-2, question_number*2):
+                questions[i].type_d_common_sentence = common_question_sentence
 
     return questions
     
