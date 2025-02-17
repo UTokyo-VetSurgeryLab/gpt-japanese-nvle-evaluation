@@ -1,10 +1,12 @@
+import datetime
 import re
 import os
 import pandas as pd
 import pdfplumber
 
+
 # これを使う
-def question_pdf_converter_to_excel_test(pdf_path, output_path):
+def question_pdf_converter_to_excel_test(path):
     """
     PDFから問題番号、問題文、選択肢を抽出し、エクセルファイルに保存する関数。
     
@@ -13,6 +15,14 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
         output_path (str): 出力エクセルファイルのパス。
     """
     data = []
+    common_question_sentences = []
+    
+    dt_now = datetime.datetime.now()
+    now = dt_now.strftime('%Y%m%d_%H%M')
+    
+    pdf_path = f'{path}/questions.pdf'
+    output_path = f'{path}/questions_{now}.xlsx'
+    academic_d_common_question_file_path = f'{path}/questions_common_sentence_{now}.xlsx'
     
     alp_options = {'a', 'b', 'c', 'd', 'e'}
 
@@ -22,7 +32,7 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
             text = page.extract_text()
             if text:
                 lines = text.split('\n')
-                question_texts, options = [], []
+                question_texts, options, common_question_text =[], [], []
                 #in_question = False
                 is_option = False
 
@@ -32,6 +42,8 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
                         # If a question was already being processed, save it before starting a new one
                         if question_texts and options:
                             data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
+                        elif common_question_text:
+                            common_question_sentences.append((len(common_question_sentences)+1, "\n".join(common_question_text[1:])))
                         
                         # Start a new question
                         question_head_text = line.strip().lstrip('問').lstrip()
@@ -68,8 +80,10 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
                             continue
                         if line[0] == '表':
                             continue
-                        if is_option:
+                        if question_texts and is_option:
                             options.append(line)
+                        elif is_option:
+                            common_question_text.append(line)
                         else:
                             question_texts.append(line)
                     
@@ -81,11 +95,12 @@ def question_pdf_converter_to_excel_test(pdf_path, output_path):
                 if question_texts and options:
                     data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
 
-    # データをデータフレームに変換
-    df = pd.DataFrame(data, columns=["number", "question", "options"])
-
-    # エクセルに保存
-    df.to_excel(output_path, index=False, engine="openpyxl")
+    df_question = pd.DataFrame(data, columns=["number", "question", "options"])
+    df_question.to_excel(output_path, index=False, engine="openpyxl")
+    
+    if common_question_sentences:
+        df_academic_d_common_sentence = pd.DataFrame(common_question_sentences, columns=["number", "question"])
+        df_academic_d_common_sentence.to_excel(academic_d_common_question_file_path, index=False, engine="openpyxl")
     print(f"エクセルファイルに変換完了!: {output_path}")
 
 
