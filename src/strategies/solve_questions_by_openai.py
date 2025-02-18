@@ -59,23 +59,29 @@ async def solve_questions_by_openai(
     async def process_question(question: Question):
         try:
             if is_translated_to_English:
-                response = await translate_to_English_by_openai(
+                question_sentence_in_English = await translate_to_English_by_openai(
                     openai_client=openai_client,
-                    question=question,
+                    text=question.question_sentence,
                     translate_to_english_prompt=translate_to_english_prompt
                 )
-                question_sentence = response['question_sentence_in_English']
-                answer_options = response['answer_options_in_English']
-                question.question_sentence_in_English = question_sentence
-                question.answer_options_in_English = answer_options
+                answer_options_in_English = await translate_to_English_by_openai(
+                    openai_client=openai_client,
+                    text=question.answer_options,
+                    translate_to_english_prompt=translate_to_english_prompt
+                )
+                question.question_sentence_in_English = question_sentence_in_English
+                question.answer_options_in_English = answer_options_in_English
+                user_prompt = make_question_user_prompt(
+                    question_sentence=question_sentence_in_English,
+                    answer_options=answer_options_in_English,
+                )
             else:
                 question_sentence = question.get_question_sentence()
                 answer_options = question.get_answer_options()
-
-            user_prompt = make_question_user_prompt(
-                question_sentence=question_sentence,
-                answer_options=answer_options,
-            )
+                user_prompt = make_question_user_prompt(
+                    question_sentence=question_sentence,
+                    answer_options=answer_options,
+                )
             
             base64_image = None
             if is_image_contained:
