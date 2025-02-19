@@ -34,8 +34,8 @@ def read_excel(
         question_number = int(question_number_float)
         
         if is_image_contained:
-            image_num = question_number * 2 - 1 if is_type_d else question_number
-            image_path = f'{images_file_path}/q{image_num}.heic'
+            image_num = (question_number+1) // 2 if is_type_d else question_number
+            image_path = f'{images_file_path}/image{image_num}.PDF'
             question = Question(
                 question_number=question_number,
                 question_sentence=question_sentence,

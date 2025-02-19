@@ -3,7 +3,7 @@ import asyncio
 
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
-from src.services.image_encoder import image_encoder_in_base64
+from src.services.image_encoder import pdf_encoder_in_base64
 from src.services.output_result_to_excel import output_result_to_excel
 from .translate_to_English_by_openai import (
     translate_to_English_by_openai,
@@ -88,7 +88,7 @@ async def solve_questions_by_openai(
                 if image_path is None:
                     print('Error: cannot find image path')
                 try:
-                    base64_image = image_encoder_in_base64(image_path=image_path)
+                    base64_image = pdf_encoder_in_base64(image_path=image_path)
                 except Exception as e:
                     print(f'Error: {e}')
 
