@@ -1,17 +1,16 @@
 from abc import ABC
 import asyncio
-import datetime
 
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import OpenAIClient
-from src.services.accuracy import calculate_accuracy
-from src.services.write_to_excel import write_api_answers_to_excel
 from src.services.image_encoder import image_encoder_in_base64
+from src.services.output_result_to_excel import output_result_to_excel
 from .translate_to_English_by_openai import (
     translate_to_English_by_openai,
     TranslateToEnglishPrompt,
     BasicTranslateToEnglishPrompt,
 )
+
 
 class SolveQuestionPrompt(ABC):
     prompt_name = ""
@@ -55,27 +54,33 @@ async def solve_questions_by_openai(
     is_image_contained: bool = False,
 ):
     system_prompt = solve_question_prompt.system_prompt
-    
+
     async def process_question(question: Question):
         try:
             if is_translated_to_English:
-                response = await translate_to_English_by_openai(
+                question_sentence_in_English = await translate_to_English_by_openai(
                     openai_client=openai_client,
-                    question=question,
+                    text=question.question_sentence,
                     translate_to_english_prompt=translate_to_english_prompt
                 )
-                question_sentence = response['question_sentence_in_English']
-                answer_options = response['answer_options_in_English']
-                question.question_sentence_in_English = question_sentence
-                question.answer_options_in_English = answer_options
+                answer_options_in_English = await translate_to_English_by_openai(
+                    openai_client=openai_client,
+                    text=question.answer_options,
+                    translate_to_english_prompt=translate_to_english_prompt
+                )
+                question.question_sentence_in_English = question_sentence_in_English
+                question.answer_options_in_English = answer_options_in_English
+                user_prompt = make_question_user_prompt(
+                    question_sentence=question_sentence_in_English,
+                    answer_options=answer_options_in_English,
+                )
             else:
                 question_sentence = question.get_question_sentence()
                 answer_options = question.get_answer_options()
-
-            user_prompt = make_question_user_prompt(
-                question_sentence=question_sentence,
-                answer_options=answer_options,
-            )
+                user_prompt = make_question_user_prompt(
+                    question_sentence=question_sentence,
+                    answer_options=answer_options,
+                )
             
             base64_image = None
             if is_image_contained:
@@ -105,36 +110,14 @@ async def solve_questions_by_openai(
         await asyncio.gather(*tasks)
 
     if excel_output_path:
-        header_list = []
-        dt_now = datetime.datetime.now()
-        now = dt_now.strftime('%Y/%m/%d %H:%M')
-        header_list.append(now)
-        model = f"model:{openai_client.model}"
-        header_list.append(model)
-        header_list.append(f"\nsolve_prompt:{solve_question_prompt.prompt_name}")
-        if is_translated_to_English:
-            header_list.append(f"\ntranslation:{translate_to_english_prompt.prompt_name}")
-        with_image = 'O' if is_image_contained else 'X'
-        header_list.append(f"\nwith_images:{with_image}")
-        header = '\n'.join(header_list)
-
-        if does_also_write_openai_answer:
-            openai_answer_list = [question.openai_answer for question in questions]
-            write_api_answers_to_excel(
-                header=header,
-                values=openai_answer_list,
-                excel_path=excel_output_path,
-            )
-        openai_iscorrect_list = [
-            "O" if question.is_correct() else "X" for question in questions
-        ]
-        # 正答率をエクセルの最下段に書き込む
-        accuracy = calculate_accuracy(questions=questions)
-        openai_iscorrect_list.append(round(accuracy, 2))
-
-        write_api_answers_to_excel(
-            header=header,
-            values=openai_iscorrect_list,
-            excel_path=excel_output_path,
+        output_result_to_excel(
+            questions=questions,
+            openai_client_model_str=openai_client.model, 
+            is_translated_to_English=is_translated_to_English,
+            excel_output_path=excel_output_path,
+            does_also_write_openai_answer=does_also_write_openai_answer,
+            solve_question_prompt_str=solve_question_prompt.system_prompt,
+            translate_to_english_prompt_str=translate_to_english_prompt.system_prompt,
+            is_image_contained=is_image_contained,
         )
     return questions

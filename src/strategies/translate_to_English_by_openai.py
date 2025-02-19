@@ -32,25 +32,16 @@ class OptimizedTranslateToEnglishPrompt1(TranslateToEnglishPrompt):
 
 async def translate_to_English_by_openai(
     openai_client: OpenAIClient,
-    question: Question,
+    text: str,
     translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
 ):
     system_prompt = translate_to_english_prompt.system_prompt
     
-    question_sentence = question.get_question_sentence()
-    answer_options = question.get_answer_options()
     try:
-        question_sentence_in_English = await openai_client.fetch_completion(
+        text_in_English = await openai_client.fetch_completion(
             system_prompt=system_prompt,
-            user_prompt=question_sentence,
-        )
-        answer_options_in_English = await openai_client.fetch_completion(
-            system_prompt=system_prompt,
-            user_prompt=answer_options,
+            user_prompt=text,
         )
     except Exception as e:
         print(e)
-    return {
-        'question_sentence_in_English': question_sentence_in_English,
-        'answer_options_in_English': answer_options_in_English,
-    }
+    return text_in_English
