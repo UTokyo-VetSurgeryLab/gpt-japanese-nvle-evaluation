@@ -45,7 +45,7 @@ def make_question_user_prompt(question_sentence, answer_options):
 async def solve_questions_by_openai(
     openai_client: OpenAIClient,
     questions: list[Question], 
-    batch_size: int = 10,
+    batch_size: int = 5,
     is_translated_to_English: bool = False,
     excel_output_path: str = '',
     does_also_write_openai_answer: bool = False,
