@@ -30,7 +30,7 @@ class OpenAIParams:
 
 class OpenAIClient:
     MAX_FETCH_NUM = 3
-    SLEEP_TIME_SEC = 1
+    SLEEP_TIME_SEC = 5
     def __init__(
         self,
         api_key=OpenAIParams.api_key,
