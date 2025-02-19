@@ -1,9 +1,10 @@
 import io
 import base64
 from PIL import Image
+from pdf2image import convert_from_path
 import pillow_heif
 
-def image_encoder_in_base64(image_path):
+def heic_image_encoder_in_base64(image_path):
     """
     HEICファイルをJPEGに変換し、Base64エンコードした文字列を返す。
     """
@@ -24,3 +25,9 @@ def image_encoder_in_base64(image_path):
         print(f"ERROR: {e}")
         return None
 
+def pdf_encoder_in_base64(image_path):
+    imgs = convert_from_path(image_path)
+    buffer = io.BytesIO()
+    imgs[0].save(buffer, format="JPEG")
+    encoded_jpeg = base64.b64encode(buffer.getvalue()).decode('utf-8')
+    return encoded_jpeg
