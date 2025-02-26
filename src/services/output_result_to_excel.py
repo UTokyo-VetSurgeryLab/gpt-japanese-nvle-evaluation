@@ -14,6 +14,7 @@ def output_result_to_excel(
     solve_question_prompt_str: str = '',
     translate_to_english_prompt_str: str = '',
     is_image_contained: bool = False,
+    is_independently: bool = False,
 ):
     header_list = []
     dt_now = datetime.datetime.now()
@@ -21,11 +22,13 @@ def output_result_to_excel(
     header_list.append(now)
     model = f"model:{openai_client_model_str}"
     header_list.append(model)
-    header_list.append(f"\nsolve_prompt:{solve_question_prompt_str}")
+    header_list.append(f"solve_prompt:{solve_question_prompt_str}")
     if is_translated_to_English:
-        header_list.append(f"\ntranslation:{translate_to_english_prompt_str}")
+        header_list.append(f"translation:{translate_to_english_prompt_str}")
     with_image = 'O' if is_image_contained else 'X'
-    header_list.append(f"\nwith_images:{with_image}")
+    header_list.append(f"with_images:{with_image}")
+    independently = 'O' if is_independently else 'X'
+    header_list.append(f"independently:{independently}")
     header = '\n'.join(header_list)
 
     if does_also_write_openai_answer:

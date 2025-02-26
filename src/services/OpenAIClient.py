@@ -1,5 +1,6 @@
 from abc import ABC
 import asyncio
+from enum import Enum
 import openai
 
 from settings import Settings
@@ -25,6 +26,11 @@ class Gpto1Mini(OpenAIModel):
     model = "o1-mini"
     is_system_prompt_necessary = False
 
+class Roles(Enum):
+    assistant = 'assistant'
+    user = 'user'
+    system = 'system'
+
 class OpenAIParams:
     api_key = Settings.API_KEY
 
@@ -41,20 +47,11 @@ class OpenAIClient:
         self.model = model
         self.api_history_recorder = api_history_recorder
 
-    async def _completion(self, system_prompt, user_prompt, base64_image=None):
-        messages = self._make_message(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            base64_image=base64_image,
-        ) if self.model.is_system_prompt_necessary else self._make_message_without_system_prompt(
-            system_prompt=system_prompt,
-            user_prompt=user_prompt,
-            base64_image=base64_image,
-        )
+    async def _completion(self, messages):
         response = await self.client.chat.completions.create(
             model=self.model.model,
             messages=messages,
-            )
+        )
         if self.api_history_recorder:
         # 一旦costは0でやる　ToDo:コスト計算機能実装
             cost = 0
@@ -64,48 +61,50 @@ class OpenAIClient:
             )
         return response.choices[0].message.content
 
-    def _make_message(self, system_prompt, user_prompt, base64_image=None):
+    def _make_message(self, prompts_list, base64_image=None):
+        messages = []
+        for prompt in prompts_list:
+            for role, content in prompt.items():
+                messages.append({"role": role.value, "content": content})
+            
         if base64_image is not None:
-            return [
-                {"role": "system", "content": system_prompt },
-                {"role": "user", "content": [
-                    {"type": "text", "text": user_prompt},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
-                    },
-                ]},
-            ]
-        return [
-            {"role": "system", "content": system_prompt },
-            {"role": "user", "content": user_prompt },
-        ]
+            messages.append({"role": Roles.user.value, "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                },
+            ]})
+        return messages
 
-    def _make_message_without_system_prompt(self, system_prompt, user_prompt, base64_image=None):
+    def _make_message_without_system_prompt(self, prompts_list, base64_image=None):
+        messages = []
+        for prompt in prompts_list:
+            for role, content in prompt.items():
+                messages.append({
+                    "role": Roles.user.value if role == Roles.system else role.value,
+                    "content": content,
+                })
+            
         if base64_image is not None:
-            return [
-                {"role": "user", "content": [
-                    {"type": "text", "text": "\n".join([system_prompt, user_prompt])},
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
-                    },
-                ]},
-            ]
-        return [{
-            "role": "user",
-            "content": "\n".join([system_prompt, user_prompt])
-        }]
+            messages.append({"role": Roles.user.value, "content": [
+                {
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"},
+                },
+            ]})
+        return messages
 
-
-    async def fetch_completion(self, system_prompt, user_prompt, base64_image=None):
+    async def fetch_completion(self, prompts_list, base64_image=None):
+        messages = self._make_message(
+            prompts_list=prompts_list,
+            base64_image=base64_image,
+        ) if self.model.is_system_prompt_necessary else self._make_message_without_system_prompt(
+            prompts_list=prompts_list,
+            base64_image=base64_image,
+        )
         for _ in range(self.MAX_FETCH_NUM):
             try:
-                response = await self._completion(
-                    system_prompt=system_prompt,
-                    user_prompt=user_prompt,
-                    base64_image=base64_image
-                )
+                response = await self._completion(messages=messages)
                 return response
             except Exception as e:
                 print(e)

@@ -13,6 +13,7 @@ class Question:
         self.question_sentence_in_English = None
         self.answer_options_in_English = None
         self.type_d_common_sentence = None
+        self.type_d_common_sentence_in_English = None
 
     def is_correct(self):
         if self.openai_answer is None:
