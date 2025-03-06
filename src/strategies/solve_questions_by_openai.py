@@ -18,28 +18,22 @@ class SolveQuestionPrompt(ABC):
 
 class BasicSolveQuestionPrompt(SolveQuestionPrompt):
     prompt_name = "basic"
-    system_prompt = """
-    You have to solve the problem of veterinary medicine.
-    Notably, the examination is of Japan.
-    Therefore, you should refer to the low, guidelines, and criteria of Japan. 
-    """
+    system_prompt = "You have to solve the problem of veterinary medicine.\
+    Notably, the examination is of Japan.\
+    Therefore, you should refer to the low, guidelines, and criteria of Japan."
 
 class OptimizedSolveQuestionPrompt1(SolveQuestionPrompt):
     prompt_name = "optimized_1"
-    system_prompt = """
-    As a vet, provide a diagnosis, treatment, and prevention for any illness or desease
-    based on a through examination of the patient's age, symptoms, and clinical course.
-    Use your expertise to answer clinical veterinary medicine or public health questions
-    related to Japan, and output your choice. It is quite important to refer to Japanese
-    lows, guidelines, and criteion. Additionally, "in our country" means "in Japan".
-    """
+    system_prompt = "As a vet, provide a diagnosis, treatment, and prevention for any illness or desease\
+    based on a through examination of the patient's age, symptoms, and clinical course.\
+    Use your expertise to answer clinical veterinary medicine or public health questions\
+    related to Japan, and output your choice. It is quite important to refer to Japanese\
+    lows, guidelines, and criteion. Additionally, 'in our country' means 'in Japan'."
 
 def make_question_user_prompt(question_sentence, answer_options):
-        user_prompt = f"""
-        {question_sentence} 
-        The answer options are {answer_options}
-        Respond with only the number of your choice (e.g., 1, 2, 3, etc.)
-        """
+        user_prompt = f"{question_sentence}\
+        The answer options are {answer_options}\
+        Respond with only the number of your choice (e.g., 1, 2, 3, etc.)"
         return user_prompt
 
 async def solve_questions_by_openai_independently(
@@ -52,6 +46,7 @@ async def solve_questions_by_openai_independently(
     solve_question_prompt: SolveQuestionPrompt = BasicSolveQuestionPrompt,
     translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
     is_image_contained: bool = False,
+    is_dry_run: bool = False,
 ):
     system_prompt = solve_question_prompt.system_prompt
 
@@ -123,6 +118,10 @@ async def solve_questions_by_openai_independently(
                 {Roles.system: system_prompt},
                 {Roles.user: user_prompt},
             ]
+            print(prompts_list)
+            if is_dry_run:
+                return None
+            
             response = await openai_client.fetch_completion(
                 prompts_list=prompts_list,
                 base64_image=base64_image
@@ -162,6 +161,7 @@ async def solve_type_d_questions_by_openai_dependently(
     solve_question_prompt: SolveQuestionPrompt = BasicSolveQuestionPrompt,
     translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
     is_image_contained: bool = False,
+    is_dry_run: bool = False,
 ):
     system_prompt = solve_question_prompt.system_prompt
     HEAD_STRINGS_NUM_TO_CONFIRM_SAME_COMMON_SENTENCE = 20
@@ -262,6 +262,10 @@ async def solve_type_d_questions_by_openai_dependently(
                 {Roles.system: system_prompt},
                 {Roles.user: q1_user_prompt},
             ]
+            print(prompts_list)
+            if is_dry_run:
+                return None
+            
             response1 = await openai_client.fetch_completion(
                 prompts_list=prompts_list,
                 base64_image=base64_image,
