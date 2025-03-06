@@ -6,13 +6,17 @@ import pdfplumber
 
 
 # これを使う
-def question_pdf_converter_to_excel_test(path):
+def question_pdf_converter_to_excel_test(
+    path: str,
+    is_test:bool = True,
+):
     """
     PDFから問題番号、問題文、選択肢を抽出し、エクセルファイルに保存する関数。
     
     Args:
-        pdf_path (str): PDFファイルのパス。
-        output_path (str): 出力エクセルファイルのパス。
+        path (str): 入力元や出力先となるフォルダ
+        is_test (bool): testとしてconverterを使用しているか。その際に同じ出力ファイルとなってしまうと
+                        以前の記録が上書きされてしまうため、この引数を設けて防ぐ
     """
     data = []
     common_question_sentences = []
@@ -20,9 +24,14 @@ def question_pdf_converter_to_excel_test(path):
     dt_now = datetime.datetime.now()
     now = dt_now.strftime('%Y%m%d_%H%M')
     
-    pdf_path = f'{path}/questions.pdf'
-    output_path = f'{path}/questions_{now}.xlsx'
-    academic_d_common_question_file_path = f'{path}/questions_common_sentence_{now}.xlsx'
+    if is_test:
+        pdf_path = f'{path}/questions.pdf'
+        output_path = f'{path}/questions_{now}.xlsx'
+        academic_d_common_question_file_path = f'{path}/questions_common_sentence_{now}.xlsx'
+    else:
+        pdf_path = f'{path}/questions.pdf'
+        output_path = f'{path}/questions.xlsx'
+        academic_d_common_question_file_path = f'{path}/questions_common_sentence.xlsx'
     
     alp_options = {'a', 'b', 'c', 'd', 'e'}
 
@@ -41,15 +50,16 @@ def question_pdf_converter_to_excel_test(path):
                     if line.startswith('問'):
                         # If a question was already being processed, save it before starting a new one
                         if question_texts and options:
-                            data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
+                            data.append(r:=(len(data)+1, "".join(question_texts), " ".join(options)))
+                            print(f'question_texts:{question_texts}')
                         elif common_question_text:
-                            common_question_sentences.append((len(common_question_sentences)+1, "\n".join(common_question_text[1:])))
+                            common_question_sentences.append((len(common_question_sentences)+1, "".join(common_question_text[1:])))
                         
                         # Start a new question
                         question_head_text = line.strip().lstrip('問').lstrip()
                         r = re.match(r"^\d+", question_head_text)
                         question_modified_head_text = question_head_text[len(r.group(0)):]
-                        question_texts = [question_modified_head_text.strip()]
+                        question_texts = [question_modified_head_text.strip().replace('\n', '')]
                         options = []
                         #in_question = True
                         is_option = False
@@ -69,7 +79,8 @@ def question_pdf_converter_to_excel_test(path):
                                 
                     
                     elif line.strip() and line[0] in alp_options:
-                        question_texts.append(line)
+                        question_texts.append(" ")
+                        question_texts.append(line.replace('\n', '').strip())
                     else:
                         print(line)
                         if line[0] == "〰":
@@ -83,9 +94,9 @@ def question_pdf_converter_to_excel_test(path):
                         if question_texts and is_option:
                             options.append(line)
                         elif is_option:
-                            common_question_text.append(line)
+                            common_question_text.append(line.replace('\n', '').strip())
                         else:
-                            question_texts.append(line)
+                            question_texts.append(line.replace('\n', '').strip())
                     
                     # End of question block if no more options and empty lines
                     #elif in_question and not line.strip() and options:
@@ -93,7 +104,7 @@ def question_pdf_converter_to_excel_test(path):
                         
                 # Append last question on the page if any
                 if question_texts and options:
-                    data.append((len(data)+1, "\n".join(question_texts), "\n".join(options)))
+                    data.append((len(data)+1, "".join(question_texts), "\n".join(options)))
 
     df_question = pd.DataFrame(data, columns=["number", "question", "options"])
     df_question.to_excel(output_path, index=False, engine="openpyxl")
