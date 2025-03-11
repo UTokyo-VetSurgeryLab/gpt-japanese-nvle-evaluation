@@ -1,7 +1,6 @@
 from abc import ABC
 
-from src.models.models import Question
-from src.services.OpenAIClient import OpenAIClient
+from src.services.OpenAIClient import OpenAIClient, Roles
 
 class TranslateToEnglishPrompt(ABC):
     prompt_name = ""
@@ -32,12 +31,15 @@ async def translate_to_English_by_openai(
     translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
 ):
     system_prompt = translate_to_english_prompt.system_prompt
+    prompts_list = [
+        {Roles.system: system_prompt},
+        {Roles.user: text},
+    ]
     
     try:
         text_in_English = await openai_client.fetch_completion(
-            system_prompt=system_prompt,
-            user_prompt=text,
+            prompts_list=prompts_list,
         )
+        return text_in_English
     except Exception as e:
         print(e)
-    return text_in_English
