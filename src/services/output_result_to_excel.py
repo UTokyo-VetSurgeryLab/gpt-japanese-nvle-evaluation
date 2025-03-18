@@ -14,7 +14,7 @@ def output_result_to_excel(
     solve_question_prompt_str: str = '',
     translate_to_english_prompt_str: str = '',
     is_image_contained: bool = False,
-    is_independently: bool = False,
+    is_independently: bool = True,
 ):
     header_list = []
     dt_now = datetime.datetime.now()
