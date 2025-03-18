@@ -18,23 +18,29 @@ class SolveQuestionPrompt(ABC):
 
 class BasicSolveQuestionPrompt(SolveQuestionPrompt):
     prompt_name = "basic"
-    system_prompt = "You have to solve the problem of veterinary medicine.\
-    Notably, the examination is of Japan.\
-    Therefore, you should refer to the low, guidelines, and criteria of Japan."
+    system_prompt = (
+        "You have to solve the problem of veterinary medicine."
+        "Notably, the examination is of Japan."
+        "Therefore, you should refer to the low, guidelines, and criteria of Japan."
+    )
 
 class OptimizedSolveQuestionPrompt1(SolveQuestionPrompt):
     prompt_name = "optimized_1"
-    system_prompt = "As a vet, provide a diagnosis, treatment, and prevention for any illness or desease\
-    based on a through examination of the patient's age, symptoms, and clinical course.\
-    Use your expertise to answer clinical veterinary medicine or public health questions\
-    related to Japan, and output your choice. It is quite important to refer to Japanese\
-    lows, guidelines, and criteion. Additionally, 'in our country' means 'in Japan'."
+    system_prompt = (
+        "As a vet, provide a diagnosis, treatment, and prevention for any illness or desease"
+        "based on a through examination of the patient's age, symptoms, and clinical course."
+        "Use your expertise to answer clinical veterinary medicine or public health questions"
+        "related to Japan, and output your choice. It is quite important to refer to Japanese"
+        "lows, guidelines, and criteion. Additionally, 'in our country' means 'in Japan'."
+    )
 
 def make_question_user_prompt(question_sentence, answer_options):
-        user_prompt = f"{question_sentence}\
-        The answer options are {answer_options}\
-        Respond with only the number of your choice (e.g., 1, 2, 3, etc.)"
-        return user_prompt
+    user_prompt = (
+        f"{question_sentence} "
+        f"The answer options are {answer_options}. "
+        "Respond with only the number of your choice (e.g., 1, 2, 3, etc.)."
+    )
+    return user_prompt
 
 async def solve_questions_by_openai_independently(
     openai_client: OpenAIClient,
@@ -146,8 +152,9 @@ async def solve_questions_by_openai_independently(
             excel_output_path=excel_output_path,
             does_also_write_openai_answer=does_also_write_openai_answer,
             solve_question_prompt_str=solve_question_prompt.prompt_name,
-            translate_to_english_prompt_str=translate_to_english_prompt.prompt_name,
+            translate_to_english_prompt_str=translate_to_english_prompt.prompt_name if is_translated_to_English else '',
             is_image_contained=is_image_contained,
+            is_independently=True,
         )
     return questions
 
@@ -211,7 +218,7 @@ async def solve_type_d_questions_by_openai_dependently(
                 question1.type_d_common_sentence_in_English = type_d_common_sentence_in_English
                 question2.type_d_common_sentence_in_English = type_d_common_sentence_in_English
 
-                q1_question_sentences_in_English = '\n'.join([
+                q1_question_sentences_in_English = ' '.join([
                     type_d_common_sentence_in_English,
                     q1_question_sentence_in_English,
                 ])
@@ -230,7 +237,7 @@ async def solve_type_d_questions_by_openai_dependently(
                 q2_answer_options = question2.answer_options
 
                 type_d_common_sentence = question1.type_d_common_sentence
-                q1_question_sentences = '\n'.join([
+                q1_question_sentences = ' '.join([
                     type_d_common_sentence,
                     q1_question_sentence,
                 ])
@@ -243,9 +250,9 @@ async def solve_type_d_questions_by_openai_dependently(
                     answer_options=q2_answer_options,
                 )
             #print(f'q1_user_prompt:{q1_user_prompt}')
-            print(q1_question_sentence)
+            #print(q1_question_sentence)
             
-            base64_image = None
+            base64_image = ''
             if is_image_contained:
                 if question1.image_path != question2.image_path:
                     print('Error: The paths of image do not match')
@@ -258,28 +265,29 @@ async def solve_type_d_questions_by_openai_dependently(
                 except Exception as e:
                     print(f'Error: {e}')
 
-            prompts_list = [
+            prompts_list1 = [
                 {Roles.system: system_prompt},
                 {Roles.user: q1_user_prompt},
             ]
-            print(prompts_list)
+            print(prompts_list1)
             if is_dry_run:
                 return None
             
             response1 = await openai_client.fetch_completion(
-                prompts_list=prompts_list,
+                prompts_list=prompts_list1,
                 base64_image=base64_image,
             )
             print(f'response1:{response1}')
             answer1 = AnswerEnum(int(response1.strip()[0]))
             question1.openai_answer = answer1
             
-            prompts_list.append({Roles.assistant: str(answer1.value)})
-            prompts_list.append({Roles.user: q2_user_prompt})
-            print(prompts_list)
+            prompts_list2 = prompts_list1[:]
+            prompts_list2.append({Roles.assistant: str(answer1.value)})
+            prompts_list2.append({Roles.user: q2_user_prompt})
+            print(prompts_list2)
             
             response2 = await openai_client.fetch_completion(
-                prompts_list=prompts_list,
+                prompts_list=prompts_list2,
                 base64_image=base64_image,
             )
             print(f'response2:{response2}')
@@ -299,6 +307,7 @@ async def solve_type_d_questions_by_openai_dependently(
         await asyncio.gather(*tasks)
 
     if excel_output_path:
+        translate_to_english_prompt_str = translate_to_english_prompt.prompt_name if is_translated_to_English else ''
         output_result_to_excel(
             questions=questions,
             openai_client_model_str=openai_client.model.model, 
@@ -306,7 +315,7 @@ async def solve_type_d_questions_by_openai_dependently(
             excel_output_path=excel_output_path,
             does_also_write_openai_answer=does_also_write_openai_answer,
             solve_question_prompt_str=solve_question_prompt.prompt_name,
-            translate_to_english_prompt_str=translate_to_english_prompt.prompt_name,
+            translate_to_english_prompt_str=translate_to_english_prompt_str,
             is_image_contained=is_image_contained,
             is_independently=False, # dependently
         )
