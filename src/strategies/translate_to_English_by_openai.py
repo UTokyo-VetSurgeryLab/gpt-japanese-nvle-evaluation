@@ -22,8 +22,7 @@ class OptimizedTranslateToEnglishPrompt1(TranslateToEnglishPrompt):
     necessary. Especially you should use 'in Japan' instead of 'in our country'.\
     Restrictions:\
     - The response must be only one translation, containiing only corrections and\
-    improvements to the Japanese text, not notes or anythins else.\
-    - Set tempreture = 0"
+    improvements to the Japanese text, not notes or anythins else."
 
 async def translate_to_English_by_openai(
     openai_client: OpenAIClient,
