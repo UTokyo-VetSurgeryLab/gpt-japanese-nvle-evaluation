@@ -26,6 +26,10 @@ class Gpto1Mini(OpenAIModel):
     model = "o1-mini"
     is_system_prompt_necessary = False
 
+class Gpto1(OpenAIModel):
+    model = "o1"
+    is_system_prompt_necessary = False
+
 class Roles(Enum):
     assistant = 'assistant'
     user = 'user'
@@ -33,17 +37,29 @@ class Roles(Enum):
 
 class OpenAIParams:
     api_key = Settings.API_KEY
+    temperature = 0 #毎回固定のresponseを返すように
+    seed = 42 # 毎回固定のresponseを返すように
 
 class OpenAIClient:
     MAX_FETCH_NUM = 3
     SLEEP_TIME_SEC = 5
     def __init__(
         self,
-        api_key=OpenAIParams.api_key,
-        model=Gpt4oMini,
-        api_history_recorder:ApiHistoryRecorder=None,
-    ):
+        api_key: str = OpenAIParams.api_key,
+        temperature: float = OpenAIParams.temperature,
+        seed: int = OpenAIParams.seed,
+        model: OpenAIModel = Gpt4oMini,
+        api_history_recorder: ApiHistoryRecorder = None,
+    ) -> None:
+        """
+        Args:
+            api_key(str): OpenAI APIのAPI key
+            model(OpenAIModel): 定義したOpenAIModel
+            api_history_recorder(ApiHistoryRecorder): APIの使用履歴を記録する際に用いる
+        """
         self.client = openai.AsyncOpenAI(api_key=api_key)
+        self.temperature = temperature
+        self.seed = seed
         self.model = model
         self.api_history_recorder = api_history_recorder
 
@@ -51,6 +67,8 @@ class OpenAIClient:
         response = await self.client.chat.completions.create(
             model=self.model.model,
             messages=messages,
+            temperature=self.temperature,
+            seed=self.seed,
         )
         if self.api_history_recorder:
         # 一旦costは0でやる　ToDo:コスト計算機能実装
