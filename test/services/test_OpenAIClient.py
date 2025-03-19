@@ -5,6 +5,9 @@ from unittest.mock import AsyncMock, patch
 from src.services.OpenAIClient import OpenAIClient, Gpt4oMini, Gpto1Preview, Roles
 
 class TestOpenAIClient:
+    EXPECTED_TEMPERATURE = 0
+    EXPECTED_SEED = 42
+    
     @pytest.mark.asyncio
     async def test_completion_without_history_recorder(self, mocker):
         mock_client = AsyncMock()
@@ -28,7 +31,9 @@ class TestOpenAIClient:
         
         mock_client.chat.completions.create.assert_called_once_with(
             model=Gpt4oMini.model,
-            messages=messages
+            messages=messages,
+            temperature=self.EXPECTED_TEMPERATURE,
+            seed=self.EXPECTED_SEED,
         )
     
     def test_make_messages_without_images(self):
@@ -201,6 +206,8 @@ class TestOpenAIClient:
         mock_client.chat.completions.create.assert_called_once_with(
             model=model.model,
             messages=expected_prompts,
+            temperature=self.EXPECTED_TEMPERATURE,
+            seed=self.EXPECTED_SEED,
         )
 
     @pytest.mark.asyncio
