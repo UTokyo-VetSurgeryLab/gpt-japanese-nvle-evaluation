@@ -34,6 +34,12 @@ class OptimizedSolveQuestionPrompt1(SolveQuestionPrompt):
         "lows, guidelines, and criteion. Additionally, 'in our country' means 'in Japan'."
     )
 
+class NormalSolveQuestionPrompt(SolveQuestionPrompt):
+    prompt_name = "normal"
+    system_prompt = (
+        "Please answer this question."
+    )
+
 def make_question_user_prompt(question_sentence, answer_options):
     user_prompt = (
         f"{question_sentence} "
