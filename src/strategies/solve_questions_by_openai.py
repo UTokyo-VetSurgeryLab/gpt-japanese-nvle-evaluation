@@ -34,6 +34,43 @@ class OptimizedSolveQuestionPrompt1(SolveQuestionPrompt):
         "lows, guidelines, and criteion. Additionally, 'in our country' means 'in Japan'."
     )
 
+class NormalSolveQuestionPrompt(SolveQuestionPrompt):
+    prompt_name = "normal"
+    system_prompt = (
+        "Please answer this question."
+    )
+
+class OptimizedSolveQuestionPrompt2_for_essential_a_b(SolveQuestionPrompt):
+    prompt_name = "optimized_2_for_essential_a_b"
+    system_prompt = (
+        "You are tasked with answering this veterinary question. "
+        "This is an examination in Japan. Therefore, you must refer to the laws, "
+        "guidelines, and political system in Japan. "
+        "Think deeply and thoroughly. Choose the best possible answer from the given options. "
+        "Do not include explanations or additional text in the output."
+    )
+
+class OptimizedSolveQuestionPrompt2_for_c_d(SolveQuestionPrompt):
+    prompt_name = "optimized_2_for_c_d"
+    system_prompt = (
+        "You are tasked with answering this veterinary question. "
+        "This is an examination in Japan. Therefore, you must refer to the laws, "
+        "guidelines, and political systems in Japan. "
+        "You must consider deeply the given conditions such as symptoms, medical history, and animal species. "
+        "If you are given images, you must examine them very carefully. "
+        "Think deeply and thoroughly. Choose the best possible answer from the given options. "
+        "Do not include explanations or additional text in the output."
+    )
+
+class OptimizedSolveQuestionPrompt_in_Japanese_1(SolveQuestionPrompt):
+    prompt_name = "optimized_Japanese_1"
+    system_prompt = (
+        "あなたは日本獣医師国家試験に答えるAIです。"
+        "この試験は日本の法律、ガイドライン、制度に基づいて出題されています。"
+        "深く思考し、最も最適な選択肢を1つ選んでください。"
+        "解説や余計な文章は一切含まず、選んだ選択肢の番号のみを出力してください。"
+    )
+
 def make_question_user_prompt(question_sentence, answer_options):
     user_prompt = (
         f"{question_sentence} "
@@ -119,6 +156,7 @@ async def solve_questions_by_openai_independently(
                     base64_image = pdf_encoder_in_base64(image_path=image_path)
                 except Exception as e:
                     print(f'Error: {e}')
+                    return None
 
             prompts_list = [
                 {Roles.system: system_prompt},
@@ -252,7 +290,7 @@ async def solve_type_d_questions_by_openai_dependently(
             #print(f'q1_user_prompt:{q1_user_prompt}')
             #print(q1_question_sentence)
             
-            base64_image = ''
+            base64_image = None
             if is_image_contained:
                 if question1.image_path != question2.image_path:
                     print('Error: The paths of image do not match')
@@ -263,7 +301,8 @@ async def solve_type_d_questions_by_openai_dependently(
                 try:
                     base64_image = pdf_encoder_in_base64(image_path=image_path)
                 except Exception as e:
-                    print(f'Error: {e}')
+                    print(f'Error encoding: {e}')
+                    return None
 
             prompts_list1 = [
                 {Roles.system: system_prompt},

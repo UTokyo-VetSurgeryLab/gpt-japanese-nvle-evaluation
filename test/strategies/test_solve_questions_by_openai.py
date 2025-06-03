@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, call, patch
+from unittest.mock import AsyncMock, call
 
 from src.models.models import AnswerEnum, Question
 from src.services.OpenAIClient import Roles

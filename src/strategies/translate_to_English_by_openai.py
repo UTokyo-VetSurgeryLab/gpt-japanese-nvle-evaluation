@@ -24,6 +24,26 @@ class OptimizedTranslateToEnglishPrompt1(TranslateToEnglishPrompt):
     - The response must be only one translation, containiing only corrections and\
     improvements to the Japanese text, not notes or anythins else."
 
+class OptimizedTranslateToEnglishPrompt(TranslateToEnglishPrompt):
+    prompt_name = "optimized"
+    system_prompt = (
+        "You are an expert in English translation, spelling correction, and veterinary medical terminology. "
+        "Your task is to translate Japanese text into clear, accurate English that is easy for non-specialists "
+        "to understand—ideally at a high school reading level. Preserve the original meaning as much as possible, "
+        "but favor a more literal translation when it improves clarity. If the original text refers to a country "
+        "without naming it (e.g., 'our country'), explicitly state the country's name. For instance, use 'in Japan' "
+        "instead of 'in our country'."
+        "Return only the corrected and improved English translation."
+        "Do not include notes, explanations, or multiple translation options."
+    )
+
+
+class NormalTranslateToEnglishPrompt(TranslateToEnglishPrompt):
+    prompt_name = "normal"
+    system_prompt = (
+        "Please translate to English."
+    )
+
 async def translate_to_English_by_openai(
     openai_client: OpenAIClient,
     text: str,

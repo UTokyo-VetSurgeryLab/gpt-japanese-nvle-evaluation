@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 
 from src.services.OpenAIClient import Roles
 from src.strategies.translate_to_English_by_openai import translate_to_English_by_openai, TranslateToEnglishPrompt

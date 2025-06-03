@@ -30,9 +30,30 @@ def output_result_to_excel(
     independently = 'O' if is_independently else 'X'
     header_list.append(f"independently:{independently}")
     header = '\n'.join(header_list)
+    
+    if is_translated_to_English:
+        english_question_sentence_list = []
+        for question in questions:
+            in_Englishs = []
+            if (english_common_sentence:=question.type_d_common_sentence_in_English) is not None:
+                in_Englishs.append(english_common_sentence)
+            in_Englishs.append(english_question_sentence if (english_question_sentence:=question.question_sentence_in_English) is not None else 'error')
+            english_question_sentence_list.append(' '.join(in_Englishs))
+
+        write_api_answers_to_excel(
+            header=header,
+            values=english_question_sentence_list,
+            excel_path=excel_output_path,
+        )
+        english_answer_options_list = [english_answer_options if (english_answer_options:=question.answer_options_in_English) is not None else 'error' for question in questions]
+        write_api_answers_to_excel(
+            header=header,
+            values=english_answer_options_list,
+            excel_path=excel_output_path,
+        )
 
     if does_also_write_openai_answer:
-        openai_answer_list = [question.openai_answer for question in questions]
+        openai_answer_list = [ans.value if (ans:=question.openai_answer) is not None else 'error' for question in questions]
         write_api_answers_to_excel(
             header=header,
             values=openai_answer_list,
@@ -42,8 +63,13 @@ def output_result_to_excel(
         "O" if question.is_correct() else "X" for question in questions
     ]
     # 正答率をエクセルの最下段に書き込む
-    accuracy = calculate_accuracy(questions=questions)
-    openai_iscorrect_list.append(round(accuracy, 2))
+    response = calculate_accuracy(questions=questions)
+    accuracy_percent = round(response['accuracy']*100, 0)
+    correct_num = response['correct_num']
+    wrong_num = response['wrong_num']
+    question_num = correct_num + wrong_num
+    openai_iscorrect_list.append(f'{accuracy_percent}%')
+    openai_iscorrect_list.append(f'{correct_num}/{question_num}')
 
     write_api_answers_to_excel(
         header=header,
