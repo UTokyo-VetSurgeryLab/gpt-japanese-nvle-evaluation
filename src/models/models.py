@@ -17,7 +17,7 @@ class Question:
 
     def is_correct(self):
         if self.openai_answer is None:
-            return None
+            return False
         else:
             return self.openai_answer in self.correct_answer
 

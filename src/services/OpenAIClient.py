@@ -30,6 +30,10 @@ class Gpto1(OpenAIModel):
     model = "o1"
     is_system_prompt_necessary = False
 
+class Gpto3(OpenAIModel):
+    model = "o3"
+    is_system_prompt_necessary = False
+
 class Roles(Enum):
     assistant = 'assistant'
     user = 'user'
@@ -37,8 +41,8 @@ class Roles(Enum):
 
 class OpenAIParams:
     api_key = Settings.API_KEY
-    temperature = 0 #毎回固定のresponseを返すように
-    seed = 42 # 毎回固定のresponseを返すように
+    temperature = 1 #o1以降のモデルはtempretureが１に固定のため
+    seed = 42
 
 class OpenAIClient:
     MAX_FETCH_NUM = 3

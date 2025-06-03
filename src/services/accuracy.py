@@ -9,4 +9,9 @@ def calculate_accuracy(questions):
     if correct + wrong == 0:
         print('ERROR: the question list is empty')
         return None
-    return correct / (correct + wrong)
+    accuracy = correct / (correct + wrong)
+    return {
+        'accuracy': accuracy,
+        'correct_num': correct,
+        'wrong_num': wrong,
+    }

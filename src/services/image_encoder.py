@@ -26,7 +26,8 @@ def heic_image_encoder_in_base64(image_path):
         return None
 
 def pdf_encoder_in_base64(image_path):
-    imgs = convert_from_path(image_path)
+    # ToDo: あとで変更必要
+    imgs = convert_from_path(image_path, poppler_path='/opt/homebrew/bin')
     buffer = io.BytesIO()
     imgs[0].save(buffer, format="JPEG")
     encoded_jpeg = base64.b64encode(buffer.getvalue()).decode('utf-8')
