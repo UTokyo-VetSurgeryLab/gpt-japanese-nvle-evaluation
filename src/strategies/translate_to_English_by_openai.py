@@ -47,7 +47,7 @@ class NormalTranslateToEnglishPrompt(TranslateToEnglishPrompt):
 async def translate_to_English_by_openai(
     openai_client: OpenAIClient,
     text: str,
-    translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
+    translate_to_english_prompt: type[TranslateToEnglishPrompt] = BasicTranslateToEnglishPrompt,
 ):
     system_prompt = translate_to_english_prompt.system_prompt
     prompts_list = [

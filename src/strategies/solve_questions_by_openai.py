@@ -86,8 +86,8 @@ async def solve_questions_by_openai_independently(
     is_translated_to_English: bool = False,
     excel_output_path: str = '',
     does_also_write_openai_answer: bool = False,
-    solve_question_prompt: SolveQuestionPrompt = BasicSolveQuestionPrompt,
-    translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
+    solve_question_prompt: type[SolveQuestionPrompt] = BasicSolveQuestionPrompt,
+    translate_to_english_prompt: type[TranslateToEnglishPrompt] = BasicTranslateToEnglishPrompt,
     is_image_contained: bool = False,
     is_dry_run: bool = False,
 ):
@@ -101,11 +101,15 @@ async def solve_questions_by_openai_independently(
                     text=question.question_sentence,
                     translate_to_english_prompt=translate_to_english_prompt
                 )
+                if question_sentence_in_English is None:
+                    return None
                 answer_options_in_English = await translate_to_English_by_openai(
                     openai_client=openai_client,
                     text=question.answer_options,
                     translate_to_english_prompt=translate_to_english_prompt
                 )
+                if answer_options_in_English is None:
+                    return None
                 question.question_sentence_in_English = question_sentence_in_English
                 question.answer_options_in_English = answer_options_in_English
                 if question.type_d_common_sentence is None:
@@ -203,8 +207,8 @@ async def solve_type_d_questions_by_openai_dependently(
     is_translated_to_English: bool = False,
     excel_output_path: str = '',
     does_also_write_openai_answer: bool = False,
-    solve_question_prompt: SolveQuestionPrompt = BasicSolveQuestionPrompt,
-    translate_to_english_prompt: TranslateToEnglishPrompt = BasicTranslateToEnglishPrompt,
+    solve_question_prompt: type[SolveQuestionPrompt] = BasicSolveQuestionPrompt,
+    translate_to_english_prompt: type[TranslateToEnglishPrompt] = BasicTranslateToEnglishPrompt,
     is_image_contained: bool = False,
     is_dry_run: bool = False,
 ):
