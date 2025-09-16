@@ -34,6 +34,10 @@ class Gpto3(OpenAIModel):
     model = "o3"
     is_system_prompt_necessary = False
 
+class Gpt5(OpenAIModel):
+    model = "gpt-5"
+    is_system_prompt_necessary = False
+
 class Roles(Enum):
     assistant = 'assistant'
     user = 'user'
