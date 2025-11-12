@@ -34,13 +34,21 @@ class Gpto3(OpenAIModel):
     model = "o3"
     is_system_prompt_necessary = False
 
+class Gpt5(OpenAIModel):
+    model = "gpt-5"
+    is_system_prompt_necessary = False
+
+class Gpt5WithThinking(OpenAIModel):
+    model = "gpt-5-thinking"
+    is_system_prompt_necessary = False
+
 class Roles(Enum):
     assistant = 'assistant'
     user = 'user'
     system = 'system'
 
 class OpenAIParams:
-    api_key = Settings.API_KEY
+    api_key = key if (key:=Settings.API_KEY) is not None else ""
     temperature = 1 #o1以降のモデルはtempretureが１に固定のため
     seed = 42
 
@@ -52,8 +60,8 @@ class OpenAIClient:
         api_key: str = OpenAIParams.api_key,
         temperature: float = OpenAIParams.temperature,
         seed: int = OpenAIParams.seed,
-        model: OpenAIModel = Gpt4oMini,
-        api_history_recorder: ApiHistoryRecorder = None,
+        model: type[OpenAIModel] = Gpt4oMini,
+        api_history_recorder: ApiHistoryRecorder|None = None,
     ) -> None:
         """
         Args:

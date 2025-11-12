@@ -7,19 +7,16 @@ class Question:
         self.question_sentence = question_sentence
         self.answer_options = answer_options
         self.image_path = image_path
-        self.supplimentary_information = None
+        self.supplimentary_information: str = ""
         self.correct_answer = set()
-        self.openai_answer = None
-        self.question_sentence_in_English = None
-        self.answer_options_in_English = None
-        self.type_d_common_sentence = None
-        self.type_d_common_sentence_in_English = None
+        self.openai_answer: AnswerEnum = AnswerEnum(None)
+        self.question_sentence_in_English: str = ""
+        self.answer_options_in_English: str = ""
+        self.type_d_common_sentence: str = ""
+        self.type_d_common_sentence_in_English: str = ""
 
     def is_correct(self):
-        if self.openai_answer is None:
-            return False
-        else:
-            return self.openai_answer in self.correct_answer
+        return self.openai_answer and self.openai_answer in self.correct_answer
 
     def read_supplimentary_information(self, text):
         self.supplimentary_information = text
