@@ -79,6 +79,9 @@ def make_question_user_prompt(question_sentence, answer_options):
     )
     return user_prompt
 
+class SolveQuestionError(Exception):
+    pass
+
 async def solve_questions_by_openai_independently(
     openai_client: OpenAIClient,
     questions: list[Question], 
@@ -123,6 +126,8 @@ async def solve_questions_by_openai_independently(
                         text=question.type_d_common_sentence,
                         translate_to_english_prompt=translate_to_english_prompt
                     )
+                    if type_d_common_sentence_in_English is None:
+                        raise Exception()
                     question.type_d_common_sentence_in_English = type_d_common_sentence_in_English
                     question_sentences_in_English = '\n'.join([
                         type_d_common_sentence_in_English,
@@ -174,6 +179,8 @@ async def solve_questions_by_openai_independently(
                 prompts_list=prompts_list,
                 base64_image=base64_image
             )
+            if response is None:
+                raise Exception()
             answer = AnswerEnum(int(response.strip()[0]))
             question.set_openai_answer(answer)
         except Exception as e:
@@ -247,6 +254,15 @@ async def solve_type_d_questions_by_openai_dependently(
                     translate_to_english_prompt=translate_to_english_prompt
                 )
 
+                if q1_question_sentence_in_English is None:
+                    raise SolveQuestionError()
+                if q1_answer_options_in_English is None:
+                    raise SolveQuestionError()
+                if q2_question_sentence_in_English is None:
+                    raise SolveQuestionError()
+                if q2_answer_options_in_English is None:
+                    raise SolveQuestionError()
+                
                 question1.question_sentence_in_English = q1_question_sentence_in_English
                 question1.answer_options_in_English = q1_answer_options_in_English
                 question2.question_sentence_in_English = q2_question_sentence_in_English
@@ -257,6 +273,10 @@ async def solve_type_d_questions_by_openai_dependently(
                     text=question1.type_d_common_sentence,
                     translate_to_english_prompt=translate_to_english_prompt
                 )
+                
+                if type_d_common_sentence_in_English is None:
+                    raise SolveQuestionError()
+                
                 question1.type_d_common_sentence_in_English = type_d_common_sentence_in_English
                 question2.type_d_common_sentence_in_English = type_d_common_sentence_in_English
 
@@ -320,6 +340,8 @@ async def solve_type_d_questions_by_openai_dependently(
                 prompts_list=prompts_list1,
                 base64_image=base64_image,
             )
+            if response1 is None:
+                raise SolveQuestionError()
             print(f'response1:{response1}')
             answer1 = AnswerEnum(int(response1.strip()[0]))
             question1.openai_answer = answer1
@@ -334,6 +356,8 @@ async def solve_type_d_questions_by_openai_dependently(
                 base64_image=base64_image,
             )
             print(f'response2:{response2}')
+            if response2 is None:
+                raise SolveQuestionError()
             answer2 = AnswerEnum(int(response2.strip()[0]))
             question2.openai_answer = answer2
         except Exception as e:

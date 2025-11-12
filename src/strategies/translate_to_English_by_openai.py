@@ -43,6 +43,9 @@ class NormalTranslateToEnglishPrompt(TranslateToEnglishPrompt):
     system_prompt = (
         "Please translate to English."
     )
+    
+class TranslationError(Exception):
+    pass
 
 async def translate_to_English_by_openai(
     openai_client: OpenAIClient,
@@ -59,6 +62,8 @@ async def translate_to_English_by_openai(
         text_in_English = await openai_client.fetch_completion(
             prompts_list=prompts_list,
         )
+        if text_in_English is None:
+            raise TranslationError
         return text_in_English
     except Exception as e:
         print(e)

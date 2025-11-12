@@ -9,7 +9,7 @@ def is_nan(x):
 
 def read_excel(
         file_path,
-    ):
+    ) -> list[Question]:
     
     is_type_d = file_path[-1] == 'd'
     
@@ -66,7 +66,7 @@ def read_excel(
         question = questions[question_number-1]
         if question.get_question_number() != question_number:
             print('ERROR: CANNOT READ EXCEL FILE WELL')
-            return None
+            return []
         question.read_correct_answer(correct_answer)
     
     if is_type_d:
