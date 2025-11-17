@@ -4,43 +4,53 @@ from enum import Enum
 import openai
 
 from settings import Settings
+from src.services.hash import hash_string
 from src.services.recorder import ApiHistoryRecorder
 
 class OpenAIModel(ABC):
     model = ""
     is_system_prompt_necessary = True
+    is_safety_identifier_necessary = False
 
 class Gpt4o(OpenAIModel):
     model = "gpt-4o"
     is_system_prompt_necessary = True
+    is_safety_identifier_necessary = False
 
 class Gpt4oMini(OpenAIModel):
     model = "gpt-4o-mini"
     is_system_prompt_necessary = True
+    is_safety_identifier_necessary = False
 
 class Gpto1Preview(OpenAIModel):
     model = "o1-preview"
     is_system_prompt_necessary = False
+    is_safety_identifier_necessary = False
 
 class Gpto1Mini(OpenAIModel):
     model = "o1-mini"
     is_system_prompt_necessary = False
+    is_safety_identifier_necessary = False
 
 class Gpto1(OpenAIModel):
     model = "o1"
     is_system_prompt_necessary = False
+    is_safety_identifier_necessary = False
 
 class Gpto3(OpenAIModel):
     model = "o3"
     is_system_prompt_necessary = False
+    is_safety_identifier_necessary = False
 
 class Gpt5(OpenAIModel):
     model = "gpt-5"
     is_system_prompt_necessary = False
+    is_safety_identifier_necessary = False
 
 class Gpt5WithThinking(OpenAIModel):
     model = "gpt-5-thinking"
     is_system_prompt_necessary = False
+    is_safety_identifier_necessary = True
 
 class Roles(Enum):
     assistant = 'assistant'
@@ -51,6 +61,7 @@ class OpenAIParams:
     api_key = key if (key:=Settings.API_KEY) is not None else ""
     temperature = 1 #o1以降のモデルはtempretureが１に固定のため
     seed = 42
+    user_id = id if (id:=Settings.USER_ID) is not None else ""
 
 class OpenAIClient:
     MAX_FETCH_NUM = 3
@@ -62,6 +73,7 @@ class OpenAIClient:
         seed: int = OpenAIParams.seed,
         model: type[OpenAIModel] = Gpt4oMini,
         api_history_recorder: ApiHistoryRecorder|None = None,
+        user_id: str = OpenAIParams.user_id
     ) -> None:
         """
         Args:
@@ -74,14 +86,27 @@ class OpenAIClient:
         self.seed = seed
         self.model = model
         self.api_history_recorder = api_history_recorder
+        self.safety_identifier = self._create_safety_identifier(user_id)
+
+    def _create_safety_identifier(self, user_id):
+        return hash_string(user_id) if self.model.is_safety_identifier_necessary else ""
 
     async def _completion(self, messages):
-        response = await self.client.chat.completions.create(
-            model=self.model.model,
-            messages=messages,
-            temperature=self.temperature,
-            seed=self.seed,
-        )
+        if self.safety_identifier:
+            response = await self.client.chat.completions.create(
+                model=self.model.model,
+                messages=messages,
+                temperature=self.temperature,
+                seed=self.seed,
+                safety_identifier=self.safety_identifier,
+            )
+        else:
+            response = await self.client.chat.completions.create(
+                model=self.model.model,
+                messages=messages,
+                temperature=self.temperature,
+                seed=self.seed,
+            )
         if self.api_history_recorder:
         # 一旦costは0でやる　ToDo:コスト計算機能実装
             cost = 0
