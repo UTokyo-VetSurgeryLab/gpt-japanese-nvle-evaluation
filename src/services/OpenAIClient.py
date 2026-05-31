@@ -2,13 +2,17 @@ from abc import ABC
 import asyncio
 from enum import Enum
 import openai
+from typing import Literal
 
 from settings import Settings
 from src.services.recorder import ApiHistoryRecorder
 
+ReasoningEffort = Literal["low", "medium", "high"]
+
 class OpenAIModel(ABC):
     model = ""
     is_system_prompt_necessary = True
+    reasoning_effort: ReasoningEffort | None = None
 
 class Gpt4o(OpenAIModel):
     model = "gpt-4o"
@@ -38,9 +42,10 @@ class Gpt5(OpenAIModel):
     model = "gpt-5"
     is_system_prompt_necessary = False
 
-class Gpt5WithThinking(OpenAIModel):
-    model = "gpt-5-thinking"
+class Gpt5point1Thinking(OpenAIModel):
+    model = "gpt-5.1"
     is_system_prompt_necessary = False
+    reasoning_effort = "high"
 
 class Roles(Enum):
     assistant = 'assistant'
@@ -76,12 +81,21 @@ class OpenAIClient:
         self.api_history_recorder = api_history_recorder
 
     async def _completion(self, messages):
-        response = await self.client.chat.completions.create(
-            model=self.model.model,
-            messages=messages,
-            temperature=self.temperature,
-            seed=self.seed,
-        )
+        if self.model.reasoning_effort is not None:
+            response = await self.client.chat.completions.create(
+                model=self.model.model,
+                messages=messages,
+                temperature=self.temperature,
+                seed=self.seed,
+                reasoning_effort=self.model.reasoning_effort,
+            )
+        else:
+            response = await self.client.chat.completions.create(
+                model=self.model.model,
+                messages=messages,
+                temperature=self.temperature,
+                seed=self.seed,
+            )
         if self.api_history_recorder:
         # 一旦costは0でやる　ToDo:コスト計算機能実装
             cost = 0
